@@ -1,0 +1,72 @@
+@import "tailwindcss";
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #fbfbfd;
+  color: #1d1d1f;
+}
+
+/* 隐藏滚动条但保留功能 */
+.custom-scrollbar::-webkit-scrollbar {
+  height: 6px;
+  width: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background-color: #d1d5db;
+  border-radius: 10px;
+}
+
+/* 打印与导出 PDF 优化 */
+@media print {
+  body {
+    background-color: white !important;
+    -webkit-print-color-adjust: exact;
+  }
+  
+  /* 隐藏不需要打印的区域：导航栏、左侧工作台、右侧图库、各种操作按钮 */
+  header,
+  .fixed,
+  button,
+  .shrink-0 { /* 此类名目前用于左右两侧栏 */
+    display: none !important;
+  }
+
+  /* 解除报告区域的固定尺寸与阴影限制 */
+  main {
+    padding: 0 !important;
+    max-width: none !important;
+    display: block !important;
+  }
+  
+  .flex-col.lg\:flex-row {
+    display: block !important;
+  }
+
+  /* 核心阅读区打印样式重置 */
+  .shadow-\[0_8px_30px_rgb\(0\,0\,0\,0\.04\)\] {
+    shadow: none !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* 调整正文内容避免被截断 */
+  h1, h2, h3, h4, h5, h6 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+  
+  ul, ol, pre, blockquote, img {
+    page-break-inside: avoid;
+    break-inside: avoid;
+  }
+
+  .prose {
+    max-width: 100% !important;
+  }
+}
