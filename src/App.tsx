@@ -285,8 +285,9 @@ function App() {
     const tabs = { overview: '', business: '', ux: '', ui: '' };
     if (!fullText) return tabs;
 
-    // 第一重装甲：先剔除所有模型可能乱加的最外层 markdown 代码块标记
-    let cleanedText = fullText.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
+    // 第一重装甲：先剔除所有模型可能乱加的最外层 markdown 代码块标记，并完全剔除模型内部的思考链 <Thought_Process> 标签及内容
+    let cleanedText = fullText.replace(/<Thought_Process>[\s\S]*?<\/Thought_Process>/gi, '').trim();
+    cleanedText = cleanedText.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
 
     // 如果模型乖乖听话输出了标准的隐藏分隔符
     if (cleanedText.includes('===TAB_')) {
@@ -505,7 +506,7 @@ function App() {
         baseUserContent.push({ type: "image_url", image_url: { url: base64 } });
       });
 
-      // 终极指令架构升级：极度结构化约束，针对国产模型强化“填空式输出”和“必带分隔符”
+      // 终极指令架构升级：极度结构化约束 + 黄金思考链(CoT) + One-Shot 范例
       const expertPrompts = {
         overview: `<Role>大厂顶尖产品架构师。点评极犀利、充满傲骨且极度专业。</Role>
 <Task>输出【综合总览】分析，必须以 \`===TAB_OVERVIEW===\` 作为第一行！</Task>
@@ -515,7 +516,13 @@ function App() {
   - 首段直接给出【核心业务目标(北极星指标)】。
   - ${isMulti ? '必须输出一个标准Markdown对比表格（表头包含所有图，行包括：核心护城河、业务定位、各维度评分）' : '不用表格，直接点评核心护城河。'}
   - 【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式，绝不允许流水账！' : '客观评估信息架构合理度与设计成熟度评分。'}
-</Constraints>`,
+</Constraints>
+<Example>
+===TAB_OVERVIEW===
+### 🎯 北极星指标研判
+图1与图2虽同属下沉电商赛道，但图1的核心目标是通过**极端的信息密度**榨取单屏转化率；而图2则试图通过**品类弱化**来伪造高端感，这在下沉市场是一种极其傲慢且致命的战略误判。
+...
+</Example>`,
         
         business: `<Role>背负极高KPI的高级增长产品经理。</Role>
 <Task>输出【产品功能】深度分析，必须以 \`===TAB_BUSINESS===\` 作为第一行！</Task>
@@ -526,7 +533,14 @@ function App() {
   - 【行为触发点】：${isMulti ? '对比谁更好地部署了触发器(Prompt)，谁在逆人性设计？' : '分析页面动机与能力平衡。'}
   - 【业务链路与漏斗】：指出极其愚蠢的阻塞点。
   - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡商业转化迭代建议'}。
-</Constraints>`,
+</Constraints>
+<Example>
+===TAB_BUSINESS===
+### 📈 Fogg行为模型下的转化漏斗审计
+图1将首单补贴（Motivation）与一键支付（Ability）融合在一个极高权重的悬浮按钮上，是一个教科书级的完美触发器（Prompt）。
+反观图2，竟然在支付前强行插入了毫无必要的“补充个人资料”步骤。在动机本就脆弱的引流页加入极高摩擦力的节点，这是标准的**漏斗流失制造机**。
+...
+</Example>`,
 
         ux: `<Role>极度信仰人机工程学的UX专家。</Role>
 <Task>输出【交互体验】深度分析，必须以 \`===TAB_UX===\` 作为第一行！</Task>
@@ -537,7 +551,14 @@ function App() {
   - 【信息分块与负荷】：分析认知超载或极简折叠。
   - 【操作域与防错】：${isMulti ? '对比谁的操作排布反人类，谁的容错设计更完美。' : '审视核心CTA按钮的点击舒适区。'}
   - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡体验优化建议'}。
-</Constraints>`,
+</Constraints>
+<Example>
+===TAB_UX===
+### 🧩 米勒定律与认知负荷清算
+图2的设计师显然根本没有听说过【米勒定律（7±2法则）】。其首页强行塞入了多达14个毫无视觉层级区分的金刚位Icon，导致用户的视觉焦点如同无头苍蝇般游荡，决策成本呈指数级上升。
+相比之下，图1通过完美的卡片式分类（Chunking），将核心功能压缩至4个高频入口，展现了极强的克制力。
+...
+</Example>`,
 
         ui: `<Role>容不得半个像素偏差的顶级视觉设计专家。</Role>
 <Task>输出【设计样式】深度分析，必须以 \`===TAB_UI===\` 作为第一行！</Task>
@@ -548,12 +569,19 @@ function App() {
   - 【排版与网格】：分析亲密性、对齐与隐藏网格。
   - 【首屏质感与情绪】：${isMulti ? '对比谁的高级感更强，谁像廉价外包模板。' : '分析色彩心理学与WCAG对比度合规性。'}
   - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡视觉重构建议(剃掉多余设计噪音)'}。
-</Constraints>`
+</Constraints>
+<Example>
+===TAB_UI===
+### 📐 格式塔心理学与视觉噪音审判
+图1在处理商品列表时，完美践行了【奥卡姆剃刀原理】，剃掉了所有多余的分割线，完全依靠留白（Negative Space）和【格式塔亲密性原则】建立信息组，呼吸感极强。
+而图2则像一个上世纪的后台管理系统，充满了廉价的1px灰色边框和滥用的投影，这些毫无意义的**视觉噪音**不仅破坏了品牌的光环效应，更让整个页面显得极度拥挤与廉价。
+...
+</Example>`
       };
 
       // 封装四路并发的独立 Fetch 闭包
       const fetchExpert = async (key: keyof typeof expertPrompts) => {
-        const userPromptText = `严格遵守 System 中规定的 Role, Task 和 Constraints！直接输出正文，切记第一行必须是对应的 TAB 分隔符！`;
+        const userPromptText = `请在输出报告前，先在 <Thought_Process> 标签内进行简短的内部自我推演，找出图中的核心痛点并确定你要引用的专业定律。推演结束后，必须以 \`===TAB_${key.toUpperCase()}===\` 作为分界线，然后严格模仿 <Example> 中的"极其专业、刻薄、拉踩"的文风输出正式的 Markdown 内容！绝不要带任何客套话！`;
         const content = [{ type: "text", text: userPromptText }, ...baseUserContent];
 
         const res = await fetch(`${finalBaseUrl.replace(/\/+$/, '')}/chat/completions`, {
