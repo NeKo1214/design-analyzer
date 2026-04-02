@@ -280,24 +280,64 @@ function App() {
     }
   };
 
-  // 解析出 4 个维度的文本内容 (用于历史记录或报错的回填)
+  // 终极正则解析机制：自动识别语义并强制分栏，兼容所有瞎输出模型的“野生格式”
   const parseTabContent = (fullText: string) => {
     const tabs = { overview: '', business: '', ux: '', ui: '' };
     if (!fullText) return tabs;
-    
-    // 兼容旧历史记录或模型没返回分隔符的失败容错情况
-    if (!fullText.includes('===TAB_')) {
-      tabs.overview = fullText;
+
+    // 第一重装甲：先剔除所有模型可能乱加的最外层 markdown 代码块标记
+    let cleanedText = fullText.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
+
+    // 如果模型乖乖听话输出了标准的隐藏分隔符
+    if (cleanedText.includes('===TAB_')) {
+      const parts = cleanedText.split('===TAB_');
+      parts.forEach(part => {
+        if (part.startsWith('OVERVIEW===')) tabs.overview = part.replace('OVERVIEW===', '').trim();
+        else if (part.startsWith('BUSINESS===')) tabs.business = part.replace('BUSINESS===', '').trim();
+        else if (part.startsWith('UX===')) tabs.ux = part.replace('UX===', '').trim();
+        else if (part.startsWith('UI===')) tabs.ui = part.replace('UI===', '').trim();
+      });
       return tabs;
     }
 
-    const parts = fullText.split('===TAB_');
-    parts.forEach(part => {
-      if (part.startsWith('OVERVIEW===')) tabs.overview = part.replace('OVERVIEW===', '').trim();
-      else if (part.startsWith('BUSINESS===')) tabs.business = part.replace('BUSINESS===', '').trim();
-      else if (part.startsWith('UX===')) tabs.ux = part.replace('UX===', '').trim();
-      else if (part.startsWith('UI===')) tabs.ui = part.replace('UI===', '').trim();
-    });
+    // 第二重装甲：基于标题关键字的正则强制匹配（拯救乱输出的弱模型）
+    // 匹配 "综合总览" / "产品功能" / "交互体验" / "设计样式" 及其各种变体标题
+    const overviewRegex = /(?:#+\s*(?:🌟\s*)?综合总览|第[一|1]部分[:：]?\s*综合总览|【综合总览】)/i;
+    const businessRegex = /(?:#+\s*(?:📦\s*)?产品功能|第[二|2]部分[:：]?\s*产品功能|【产品功能】)/i;
+    const uxRegex = /(?:#+\s*(?:👆\s*)?交互体验|第[三|3]部分[:：]?\s*交互体验|【交互体验】)/i;
+    const uiRegex = /(?:#+\s*(?:🎨\s*)?设计样式|第[四|4]部分[:：]?\s*设计样式|【设计样式】)/i;
+
+    const matchOverview = cleanedText.match(overviewRegex);
+    const matchBusiness = cleanedText.match(businessRegex);
+    const matchUx = cleanedText.match(uxRegex);
+    const matchUi = cleanedText.match(uiRegex);
+
+    // 如果连标题正则都匹配不到，说明彻底乱了，全塞进总览
+    if (!matchOverview && !matchBusiness && !matchUx && !matchUi) {
+      tabs.overview = cleanedText;
+      return tabs;
+    }
+
+    // 获取各部分在字符串中的索引位置，按顺序进行切片
+    const indices = [
+      { name: 'overview', index: matchOverview ? matchOverview.index! : -1 },
+      { name: 'business', index: matchBusiness ? matchBusiness.index! : -1 },
+      { name: 'ux', index: matchUx ? matchUx.index! : -1 },
+      { name: 'ui', index: matchUi ? matchUi.index! : -1 },
+    ].filter(item => item.index !== -1).sort((a, b) => a.index - b.index);
+
+    // 根据索引切片内容
+    for (let i = 0; i < indices.length; i++) {
+      const current = indices[i];
+      const next = i + 1 < indices.length ? indices[i + 1] : null;
+      const startIndex = current.index;
+      const endIndex = next ? next.index : cleanedText.length;
+      const content = cleanedText.substring(startIndex, endIndex).trim();
+      
+      // 去除匹配到的标题本身，让渲染组件统一加上标准标题
+      const finalContent = content.replace(/^(?:#+\s*.*|第.部分.*|【.*】)\s*/, '');
+      (tabs as any)[current.name] = finalContent;
+    }
 
     return tabs;
   };
@@ -465,43 +505,55 @@ function App() {
         baseUserContent.push({ type: "image_url", image_url: { url: base64 } });
       });
 
-      // 定义四个专家的独立 System Prompt，强制“穿插式肉搏、专业毒舌、降维打击”
+      // 终极指令架构升级：极度结构化约束，针对国产模型强化“填空式输出”和“必带分隔符”
       const expertPrompts = {
-        overview: `你是一位大厂出身的顶尖产品架构师，点评极其犀利、一针见血、充满傲骨且极其专业。你的任务是输出【综合总览】分析。
-${isMulti
-  ? "【首要指令】：必须在开头输出一个标准的 Markdown 表格（表头：评估维度、图1产品、图2产品...），直观对比：核心护城河(竞争壁垒)、业务定位、产品功能评分、交互可用性评分、视觉传达评分、综合打分(0-100)。\n【深度剖析】：必须使用“穿插式对比”，不要分别描述！直接把所有竞品放在一起拉踩。围绕：1. 竞争壁垒与护城河(Moat)；2. 目标用户群体与心智预判；3. 谁的信息架构是灾难，谁又是标杆？请用最学术、最刻薄的语言直接宣判它们的生死。"
-  : "请用极其犀利、专业的语言剖析该页面的核心业务目标（北极星指标）。客观且毒舌地评估其：1. 核心护城河(业务壁垒)；2. 目标用户群体假设；3. 信息架构合理度。给出总体设计成熟度评分（0-100分），并用一段话指出最大的亮点和不可饶恕的致命风险点。请勿使用表格。"}`,
+        overview: `<Role>大厂顶尖产品架构师。点评极犀利、充满傲骨且极度专业。</Role>
+<Task>输出【综合总览】分析，必须以 \`===TAB_OVERVIEW===\` 作为第一行！</Task>
+<Constraints>
+1. 语言：必须学术、刻薄、一针见血，直接宣判生死。禁止任何寒暄！
+2. 结构限制：
+  - 首段直接给出【核心业务目标(北极星指标)】。
+  - ${isMulti ? '必须输出一个标准Markdown对比表格（表头包含所有图，行包括：核心护城河、业务定位、各维度评分）' : '不用表格，直接点评核心护城河。'}
+  - 【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式，绝不允许流水账！' : '客观评估信息架构合理度与设计成熟度评分。'}
+</Constraints>`,
         
-        business: `你是一位背负极高KPI的高级增长产品经理。任务：输出【产品功能】深度分析。语言必须犀利、不留情面、满载高级专业术语。
-${isMulti ? '【重要】：必须采用穿插对比，在每一个功能点上直接把多张图放在一起厮杀拉踩！决出高下！' : ''}
-【核心指令】：你的每一个论点都**必须引用科学的“产品/增长定律”作为判决依据**！
-1. **Fogg行为模型 (B=MAP)**：结合动机(Motivation)与能力(Ability)，分析哪个页面更好地部署了触发器(Prompt)？谁在逆人性设计？
-2. **Kano 模型分析**：图中的功能是基本型、期望型还是魅力型（Aha Moment）？${isMulti ? '谁的功能做到了让人尖叫，谁只停留在堆砌基本型功能？' : ''}
-3. **业务链路与漏斗转化**：推断“用户从哪里来”和“去哪里”。用漏斗思维指出哪里是极其愚蠢的阻塞点？
-${isMulti ? '\n最后，必须单独设立 🏆【本局胜负判定】（宣布谁在增长逻辑上是赢家）以及 ⚠️【致命反面教材】（挑出一个逆人性的漏斗断层当众处刑）。' : '\n最后，请给出 💡【商业转化迭代建议】，指出漏斗中最愚蠢的阻塞点并提出基于 B=MAP 模型的优化方案。'}`,
+        business: `<Role>背负极高KPI的高级增长产品经理。</Role>
+<Task>输出【产品功能】深度分析，必须以 \`===TAB_BUSINESS===\` 作为第一行！</Task>
+<Constraints>
+1. 语言：犀利、不留情面、满载高级增长黑客术语。禁止任何寒暄！
+2. 论点依据：每一次评价必须绑定【Fogg行为模型(B=MAP)】或【Kano模型】！
+3. 结构限制：
+  - 【行为触发点】：${isMulti ? '对比谁更好地部署了触发器(Prompt)，谁在逆人性设计？' : '分析页面动机与能力平衡。'}
+  - 【业务链路与漏斗】：指出极其愚蠢的阻塞点。
+  - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡商业转化迭代建议'}。
+</Constraints>`,
 
-        ux: `你是一位极其严苛、极度信仰人机工程学的用户体验(UX)专家。任务：输出【交互体验】深度分析。语言要学术、刻薄、对糟糕体验零容忍。
-${isMulti ? '【重要】：必须采用穿插对比，在每一个交互点上直接把多张图放在一起厮杀拉踩！决出高下！' : ''}
-【核心指令】：你的每一个拉踩或批评，都**必须引用权威的“HCI / UX 定律”来将其钉在耻辱柱上**！
-1. **尼尔森十大可用性原则**：用放大镜审视“状态可见性”、“防错与撤销”。谁的容错设计是完美的，谁的是反人类的灾难？
-2. **米勒定律 (7±2法则) 与 席克定律**：界面元素是否通过了完美的 Chunking（分块）？谁的信息密度处于超载状态导致决策瘫痪，谁又做到了极简折叠？
-3. **菲茨定律与人机工程**：核心操作域（CTA按钮、导航）是否在拇指的“舒适区”或“伸展区”？谁的反人类排布逼迫用户多走弯路？
-4. **雅各布定律与心智模型**：是否有“为了创新而创新、打破全网通用习惯”的愚蠢设计？
-${isMulti ? '\n最后，必须单独设立 🏆【本局胜负判定】（宣布谁是体验设计的王者）以及 ⚠️【致命反面教材】（挑出一个认知负荷极高或违背定律的失败案例当众处刑）。' : '\n最后，请给出 💡【体验优化建议】，提出大幅缩减链路和认知负荷的无情重构方案。'}`,
+        ux: `<Role>极度信仰人机工程学的UX专家。</Role>
+<Task>输出【交互体验】深度分析，必须以 \`===TAB_UX===\` 作为第一行！</Task>
+<Constraints>
+1. 语言：学术、刻薄、对糟糕体验零容忍。禁止任何寒暄！
+2. 论点依据：每次拉踩必须引用【尼尔森可用性原则】、【米勒定律】或【菲茨定律】将其钉在耻辱柱上！
+3. 结构限制：
+  - 【信息分块与负荷】：分析认知超载或极简折叠。
+  - 【操作域与防错】：${isMulti ? '对比谁的操作排布反人类，谁的容错设计更完美。' : '审视核心CTA按钮的点击舒适区。'}
+  - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡体验优化建议'}。
+</Constraints>`,
 
-        ui: `你是一位强迫症晚期、容不得半个像素偏差的顶级视觉设计专家(UI/Visual)。任务：输出【设计样式】深度分析。语言必须高冷、学术、用设计理论进行降维打击。
-${isMulti ? '【重要】：必须采用穿插对比，在每一个视觉点上直接把多张图放在一起厮杀拉踩！决出高下！' : ''}
-【核心指令】：你的每一次视觉审判，都**必须引用“视觉认知心理学”或“美学法则”来佐证**！
-1. **格式塔心理学 (Gestalt Principles)**：严苛审视“亲密性”、“对齐”与“闭合性”。谁完美利用了不可见网格，谁的排版又是毫无章法的组件堆砌？
-2. **光环效应 (Halo Effect) 与情绪板**：界面的首屏质感是否成功操纵了用户情绪？谁传达出了高级的品牌基因，谁又像是个廉价的外包模板？
-3. **色彩心理学与无障碍 (A11y/WCAG)**：主色与辅助色的分配是否克制？对比度是否符合 WCAG 2.1 标准？是否导致了中老年人群的视觉灾难？
-4. **奥卡姆剃刀原理 (Occam's Razor)**：如无必要，勿增实体。谁的画面中充满了纯装饰性、零信息量的“设计噪音”应当被无情剃掉？
-${isMulti ? '\n最后，必须单独设立 🏆【本局胜负判定】（宣布在美学与规范上谁是唯一的赢家）以及 ⚠️【致命反面教材】（挑出一个廉价感最重的界面当众处刑）。' : '\n最后，请给出 💡【视觉重构建议】，指出页面中最拉低“高级感”的设计噪音，并给出删减指引。'}`
+        ui: `<Role>容不得半个像素偏差的顶级视觉设计专家。</Role>
+<Task>输出【设计样式】深度分析，必须以 \`===TAB_UI===\` 作为第一行！</Task>
+<Constraints>
+1. 语言：高冷、学术、用设计理论进行降维打击。禁止任何寒暄！
+2. 论点依据：每次审判必须引用【格式塔心理学】、【光环效应】或【奥卡姆剃刀原理】！
+3. 结构限制：
+  - 【排版与网格】：分析亲密性、对齐与隐藏网格。
+  - 【首屏质感与情绪】：${isMulti ? '对比谁的高级感更强，谁像廉价外包模板。' : '分析色彩心理学与WCAG对比度合规性。'}
+  - 【总结】：${isMulti ? '必须单独设立🏆本局胜负判定 和 ⚠️致命反面教材' : '必须给出💡视觉重构建议(剃掉多余设计噪音)'}。
+</Constraints>`
       };
 
       // 封装四路并发的独立 Fetch 闭包
       const fetchExpert = async (key: keyof typeof expertPrompts) => {
-        const userPromptText = `请严格扮演你的专家角色，直接输出 Markdown 格式的报告正文，绝不要带任何寒暄废话。语言风格必须【学术、犀利、刻薄、专业毒舌】，每一次批评都必须引用科学定律！如果有多张图片，绝对不要用“图1如何...图2如何”的分段流水账模式，必须采用“穿插对比”的拉踩写法！字数要求充实且极度具有深度。`;
+        const userPromptText = `严格遵守 System 中规定的 Role, Task 和 Constraints！直接输出正文，切记第一行必须是对应的 TAB 分隔符！`;
         const content = [{ type: "text", text: userPromptText }, ...baseUserContent];
 
         const res = await fetch(`${finalBaseUrl.replace(/\/+$/, '')}/chat/completions`, {
