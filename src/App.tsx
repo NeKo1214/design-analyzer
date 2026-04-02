@@ -302,7 +302,18 @@ function App() {
     const loadedTabs = parseTabContent(item.markdown);
     setTabContents(loadedTabs);
     setActiveTab('overview'); // 重置 Tab
-    // 由于图片 URL 可能已失效（blob），这里只加载 Markdown
+    
+    // 加载关联的图片
+    if (item.images && item.images.length > 0) {
+      const filesWithPreview = item.images.map((img: string, index: number) => {
+        // 创建虚拟文件对象
+        const file = new File([], `history-image-${index}.png`, { type: 'image/png' });
+        (file as any).preview = img;
+        return file as FileWithPreview;
+      });
+      setAllFiles(filesWithPreview);
+    }
+    
     setShowHistory(false);
   };
 
@@ -1327,6 +1338,23 @@ ${tabContents[activeTab]}
                     <p className="text-xs text-zinc-500 mb-3">
                       {new Date(item.timestamp).toLocaleString('zh-CN')}
                     </p>
+                    
+                    {/* 显示关联的图片缩略图 */}
+                    {item.images && item.images.length > 0 && (
+                      <div className="flex gap-2 mb-3 overflow-x-auto pb-2">
+                        {item.images.map((img, index) => (
+                          <div key={index} className="flex-shrink-0">
+                            <img
+                              src={img}
+                              alt={`图 ${index + 1}`}
+                              className="w-12 h-12 object-cover rounded-lg border border-zinc-200"
+                              title={`图 ${index + 1}`}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    
                     <button
                       onClick={() => loadHistoryItem(item)}
                       className="w-full py-2 text-sm font-medium text-zinc-700 bg-white border border-zinc-200 hover:bg-zinc-100 rounded-lg transition-colors"
