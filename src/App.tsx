@@ -227,7 +227,12 @@ function App() {
   // 保存分析记录到 IndexedDB
   const saveToHistory = async (title: string, markdown: string) => {
     try {
-      const images = allFiles.map(f => f.preview); // 保存图片预览 URL
+      // 将图片转换为base64存储
+      const imagePromises = allFiles.map(async (file) => {
+        return await fileToBase64(file);
+      });
+      const images = await Promise.all(imagePromises);
+      
       const newRecord = {
         id: Date.now().toString(),
         title,
