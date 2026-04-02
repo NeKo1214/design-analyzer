@@ -37,16 +37,16 @@ class MarkdownErrorBoundary extends Component<{children: ReactNode}, {hasError: 
 // 极简主义阅读模式（类 Notion / 苹果风），去除繁杂的色块与边框，专注于排版与内容呼吸感
 const markdownComponents = {
   h1: function CustomH1({ children }: any) {
-    return <h1 className="text-2xl font-bold text-zinc-900 mt-10 mb-6 tracking-tight">{children}</h1>;
+    return <h1 className="text-2xl font-bold text-zinc-900 mt-8 mb-4 tracking-tight">{children}</h1>;
   },
   h3: function CustomH3({ children }: any) {
-    return <h3 className="text-[17px] font-semibold text-zinc-900 mt-10 mb-4 tracking-tight">{children}</h3>;
+    return <h3 className="text-[17px] font-semibold text-zinc-900 mt-6 mb-3 tracking-tight">{children}</h3>;
   },
   h2: function CustomH2({ children }: any) {
-    return <h2 className="text-xl font-semibold text-zinc-900 mt-8 mb-5 tracking-tight">{children}</h2>;
+    return <h2 className="text-xl font-semibold text-zinc-900 mt-7 mb-4 tracking-tight">{children}</h2>;
   },
   h4: function CustomH4({ children }: any) {
-    return <h4 className="text-base font-medium text-zinc-800 mt-6 mb-3 tracking-tight">{children}</h4>;
+    return <h4 className="text-base font-medium text-zinc-800 mt-5 mb-2 tracking-tight">{children}</h4>;
   },
   h5: function CustomH5({ children }: any) {
     return <h5 className="text-sm font-medium text-zinc-700 mt-4 mb-2 tracking-tight uppercase">{children}</h5>;
@@ -55,16 +55,16 @@ const markdownComponents = {
     return <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline transition-colors">{children}</a>;
   },
   p: function CustomP({ children }: any) {
-    return <p className="text-zinc-600 leading-[1.8] mb-5 text-[15px] font-normal">{children}</p>;
+    return <p className="text-zinc-600 leading-[1.8] mb-4 text-[15px] font-normal">{children}</p>;
   },
   ul: function CustomUl({ children }: any) {
-    return <ul className="space-y-2.5 mb-6 ml-5 text-zinc-600 font-normal">{children}</ul>;
+    return <ul className="space-y-2 mb-4 ml-5 text-zinc-600 font-normal">{children}</ul>;
   },
   ol: function CustomOl({ children }: any) {
-    return <ol className="space-y-2.5 mb-6 list-decimal list-outside ml-5 text-zinc-600 font-normal">{children}</ol>;
+    return <ol className="space-y-2 mb-4 list-decimal list-outside ml-5 text-zinc-600 font-normal">{children}</ol>;
   },
   li: function CustomLi({ children }: any) {
-    return <li className="text-zinc-600 text-[15px] leading-[1.8]">{children}</li>;
+    return <li className="text-zinc-600 text-[15px] leading-[1.8] mb-1">{children}</li>;
   },
   strong: function CustomStrong({ children }: any) {
     return (
@@ -75,14 +75,14 @@ const markdownComponents = {
   },
   blockquote: function CustomQuote({ children }: any) {
     return (
-      <blockquote className="pl-4 py-1 my-6 border-l-2 border-zinc-200 text-zinc-500 text-[15px] leading-relaxed italic bg-transparent">
+      <blockquote className="pl-4 py-2 my-4 border-l-2 border-zinc-200 text-zinc-500 text-[15px] leading-relaxed italic bg-transparent">
         {children}
       </blockquote>
     );
   },
   table: function CustomTable({ children }: any) {
     return (
-      <div className="overflow-x-auto my-8 border border-zinc-100 rounded-xl">
+      <div className="overflow-x-auto my-6 border border-zinc-100 rounded-xl">
         <table className="w-full text-[14px] text-left border-collapse m-0">
           {children}
         </table>
@@ -96,14 +96,14 @@ const markdownComponents = {
     return <tbody className="divide-y divide-zinc-50">{children}</tbody>;
   },
   th: function CustomTh({ children }: any) {
-    return <th className="px-5 py-3.5 font-medium whitespace-nowrap">{children}</th>;
+    return <th className="px-4 py-3 font-medium whitespace-nowrap">{children}</th>;
   },
   td: function CustomTd({ children }: any) {
-    return <td className="px-5 py-3.5 text-zinc-600 align-top leading-relaxed break-words">{children}</td>;
+    return <td className="px-4 py-3 text-zinc-600 align-top leading-relaxed break-words">{children}</td>;
   },
   pre: function CustomPre({ children }: any) {
     // 使用浅色背景防止大模型将表格意外缩进解析为代码块时造成视觉突兀
-    return <pre className="overflow-x-auto bg-zinc-50 border border-zinc-100 text-zinc-700 p-5 rounded-2xl text-[14px] leading-[1.8] my-6 custom-scrollbar break-words whitespace-pre-wrap font-sans">{children}</pre>;
+    return <pre className="overflow-x-auto bg-zinc-50 border border-zinc-100 text-zinc-700 p-4 rounded-2xl text-[14px] leading-[1.8] my-4 custom-scrollbar break-words whitespace-pre-wrap font-sans">{children}</pre>;
   },
   code: function CustomCode({ inline, children }: any) {
     if (inline) {
@@ -1157,7 +1157,7 @@ ${tabContents[activeTab]}
 
                           {/* Markdown 内容渲染区 (带切换动画) */}
                           <div key={activeTab} className="animate-in slide-in-from-bottom-2 fade-in duration-300">
-                            <div className="w-full bg-white rounded-3xl pb-10 break-words max-w-full overflow-hidden">
+                            <div className="w-full break-words max-w-full">
                               <MarkdownErrorBoundary>
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
