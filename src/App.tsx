@@ -1,8 +1,9 @@
-import { useState, useCallback, useEffect, Component, ErrorInfo, ReactNode } from 'react';
+import { useState, useCallback, useEffect, Component, ErrorInfo, ReactNode, useMemo } from 'react';
 import { Settings, Upload, X, Image as ImageIcon, BarChart2, Copy, Download, Check, Printer, Clock } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 // 彻底解决 Markdown 渲染导致整个 React 应用白屏崩溃的终极方案：错误边界
 class MarkdownErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, errorMsg: string}> {
@@ -512,13 +513,22 @@ function App() {
 <Task>输出【综合总览】分析，必须以 \`===TAB_OVERVIEW===\` 作为第一行！</Task>
 <Constraints>
 1. 语言：必须学术、刻薄、一针见血，直接宣判生死。禁止任何寒暄！
-2. 结构限制：
-  - 首段直接给出【核心业务目标(北极星指标)】。
-  - ${isMulti ? '必须输出一个标准Markdown对比表格（表头包含所有图，行包括：核心护城河、业务定位、各维度评分）' : '不用表格，直接点评核心护城河。'}
-  - 【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式，绝不允许流水账！' : '客观评估信息架构合理度与设计成熟度评分。'}
+2. 数据可视化锚点(极其重要)：
+  - 在输出文字之前，必须严格按以下 JSON 格式输出打分数据块，用于前端渲染雷达图！(各项满分100)
+  ${isMulti ?
+    '```json\n{"data":[{"name":"业务护城河","图1":85,"图2":60},{"name":"功能创新度","图1":70,"图2":90},{"name":"交互可用性","图1":95,"图2":50},{"name":"视觉高级感","图1":60,"图2":85},{"name":"转化效率","图1":90,"图2":40}]}\n```'
+    : '```json\n{"data":[{"name":"业务定位","分数":85},{"name":"功能逻辑","分数":70},{"name":"交互体验","分数":60},{"name":"视觉美学","分数":90},{"name":"转化漏斗","分数":88}]}\n```'}
+3. 结构限制：
+  - 输出完 JSON 后，直接给出【核心业务目标(北极星指标)】。
+  - ${isMulti ? '然后输出一个Markdown表格总结优劣。' : '用一句话点评核心护城河。'}
+  - 【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式，绝不允许流水账！' : '客观评估信息架构合理度。'}
 </Constraints>
 <Example>
 ===TAB_OVERVIEW===
+\`\`\`json
+${isMulti ? '{"data":[{"name":"业务护城河","图1":85,"图2":60},{"name":"功能创新度","图1":70,"图2":90},{"name":"交互可用性","图1":95,"图2":50},{"name":"视觉高级感","图1":60,"图2":85},{"name":"转化效率","图1":90,"图2":40}]}' : '{"data":[{"name":"业务定位","分数":85},{"name":"功能逻辑","分数":70},{"name":"交互体验","分数":60},{"name":"视觉美学","分数":90},{"name":"转化漏斗","分数":88}]}'}
+\`\`\`
+
 ### 🎯 北极星指标研判
 图1与图2虽同属下沉电商赛道，但图1的核心目标是通过**极端的信息密度**榨取单屏转化率；而图2则试图通过**品类弱化**来伪造高端感，这在下沉市场是一种极其傲慢且致命的战略误判。
 ...
@@ -1251,6 +1261,71 @@ ${tabContents[activeTab]}
                             </div>
                           )}
 
+                          {/* 可视化雷达图区 (仅在综合总览Tab下，且解析出JSON数据时显示) */}
+                          {activeTab === 'overview' && useMemo(() => {
+                            try {
+                              const jsonMatch = tabContents.overview.match(/```json\n([\s\S]*?)\n```/);
+                              if (jsonMatch && jsonMatch[1]) {
+                                const parsedData = JSON.parse(jsonMatch[1]);
+                                if (parsedData.data && Array.isArray(parsedData.data)) {
+                                  const chartData = parsedData.data;
+                                  
+                                  // 判断是单图还是多图数据结构
+                                  const isMultiChart = Object.keys(chartData[0]).some(k => k.startsWith('图'));
+                                  
+                                  return (
+                                    <div className="mb-8 p-6 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col items-center shadow-sm">
+                                      <h3 className="text-lg font-bold text-zinc-800 mb-6 flex items-center gap-2">
+                                        <BarChart2 className="w-5 h-5 text-blue-600" />
+                                        核心能力雷达图
+                                      </h3>
+                                      <div className="w-full max-w-[500px] h-[300px]">
+                                        <ResponsiveContainer width="100%" height="100%">
+                                          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
+                                            <PolarGrid stroke="#e4e4e7" />
+                                            <PolarAngleAxis dataKey="name" tick={{ fill: '#52525b', fontSize: 13, fontWeight: 600 }} />
+                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
+                                            <RechartsTooltip
+                                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px 16px' }}
+                                              itemStyle={{ fontWeight: 600 }}
+                                            />
+                                            
+                                            {isMultiChart ? (
+                                              <>
+                                                {/* 动态渲染所有 "图X" 的多边形 */}
+                                                {Object.keys(chartData[0])
+                                                  .filter(k => k !== 'name')
+                                                  .map((key, i) => {
+                                                    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b'];
+                                                    const color = colors[i % colors.length];
+                                                    return (
+                                                      <Radar
+                                                        key={key}
+                                                        name={key}
+                                                        dataKey={key}
+                                                        stroke={color}
+                                                        fill={color}
+                                                        fillOpacity={0.4}
+                                                      />
+                                                    );
+                                                })}
+                                              </>
+                                            ) : (
+                                              <Radar name="评分" dataKey="分数" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.5} />
+                                            )}
+                                          </RadarChart>
+                                        </ResponsiveContainer>
+                                      </div>
+                                    </div>
+                                  );
+                                }
+                              }
+                            } catch (e) {
+                              // JSON 解析失败则静默容错，不显示雷达图
+                            }
+                            return null;
+                          }, [tabContents.overview])}
+
                           {/* Markdown 内容渲染区 (带切换动画) */}
                           <div key={activeTab} className="animate-in slide-in-from-bottom-2 fade-in duration-300">
                             <div className="w-full break-words max-w-full">
@@ -1259,7 +1334,8 @@ ${tabContents[activeTab]}
                                   remarkPlugins={[remarkGfm]}
                                   components={markdownComponents}
                                 >
-                                  {tabContents[activeTab]}
+                                  {/* 在渲染正文前，把大模型吐出来的 JSON 原始代码块隐藏掉，避免页面上出现两份数据 */}
+                                  {tabContents[activeTab].replace(/```json\n[\s\S]*?\n```/, '')}
                                 </ReactMarkdown>
                               </MarkdownErrorBoundary>
                             </div>
