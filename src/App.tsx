@@ -1,9 +1,8 @@
-import { useState, useCallback, useEffect, Component, ErrorInfo, ReactNode, useMemo } from 'react';
+import { useState, useCallback, useEffect, Component, ErrorInfo, ReactNode } from 'react';
 import { Settings, Upload, X, Image as ImageIcon, BarChart2, Copy, Download, Check, Printer, Clock } from 'lucide-react';
 import { useDropzone } from 'react-dropzone';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
 
 // 彻底解决 Markdown 渲染导致整个 React 应用白屏崩溃的终极方案：错误边界
 class MarkdownErrorBoundary extends Component<{children: ReactNode}, {hasError: boolean, errorMsg: string}> {
@@ -512,33 +511,32 @@ function App() {
         overview: `<Role>大厂顶尖产品架构师。点评极犀利、充满傲骨且极度专业。</Role>
 <Task>输出【综合总览】分析，必须以 \`===TAB_OVERVIEW===\` 作为第一行！</Task>
 <Constraints>
-1. 跨行业先验诊断(必须在内心思考链中完成)：
-   - 这是什么赛道的什么页面？(例如：SaaS后台看板、电商空购物车、社交未读消息)。
-   - 当前页面的核心生命周期/UI状态是什么？(初始加载骨架屏、无数据缺省态 Empty State、未登录态、常规填充态、报错边缘态？)
-   - 视觉比重最大的元素是【真实数据】、【占位符/插画】还是【营销文案】？
+1. 跨行业先验诊断(在思考链完成)：判定赛道、UI状态(缺省/常规/报错)及核心视觉比重。
 2. 语言：必须学术、刻薄、一针见血，直接宣判生死。禁止任何寒暄！
-3. 数据可视化锚点(极其重要)：
-  - 在输出文字之前，必须严格按以下 JSON 格式输出打分数据块，用于前端渲染雷达图！(各项满分100)
-  ${isMulti ?
-    '```json\n{"data":[{"name":"业务护城河","图1":85,"图2":60},{"name":"功能创新度","图1":70,"图2":90},{"name":"交互可用性","图1":95,"图2":50},{"name":"视觉高级感","图1":60,"图2":85},{"name":"转化效率","图1":90,"图2":40}]}\n```'
-    : '```json\n{"data":[{"name":"业务定位","分数":85},{"name":"功能逻辑","分数":70},{"name":"交互体验","分数":60},{"name":"视觉美学","分数":90},{"name":"转化漏斗","分数":88}]}\n```'}
-4. 结构限制：
-  - 输出完 JSON 后，必须首段明确宣判当前页面的【行业赛道与UI状态(如：这是一个典型的电商新手缺省态)】，并给出【核心业务目标(北极星指标)】。
-  - 增设【行业大盘基线锚定(Industry Baseline)】：无论单图多图，必须强行将其与该赛道内最顶尖的【全球/全网绝对标杆(如微信、淘宝、Bloomberg、Figma)】的标准心智进行越级对比，痛批它是微创新，还是连行业底线/标准规范都没及格。
-  - ${isMulti ? '然后输出一个Markdown表格总结优劣。' : '用一句话点评核心护城河。'}
-  - 【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式，绝不允许流水账！' : '客观评估信息架构合理度。'}
+
+2. 金融图表防幻觉特判(CRITICAL)：如果页面中包含【折线图、K线图、柱状图、收益率曲线、数据看板】，必须切换为金融数据产品专家视角！重点拷问它的：数据密度(Data-Ink Ratio)、坐标轴隐喻、颗粒度切换逻辑以及是否能直观反映出资产的涨跌趋势。绝不允许将其误判为普通图片或装饰性插画！
+3. 结构限制：
+  - 第一部分必须是【五维评分雷达】：请使用标准的 Markdown 表格（绝不要输出 JSON），列出 [业务壁垒, 功能创新, 交互体验, 视觉美学, 转化效率] 五个维度的分数（0-100）。
+  - 第二部分【北极星指标研判】：明确宣判页面的【行业赛道与UI状态】，指出核心业务目标。
+  - 第三部分【行业基线锚定(Baseline)】：强行与全网绝对标杆(如微信、淘宝、Figma、Bloomberg)的标准心智进行越级对比，痛批是微创新还是不及格。
+  - 第四部分【深度剖析】：${isMulti ? '必须采用"图1做了XX而图2却XX"的穿插拉踩句式！如果涉及图表，必须对比谁的数据呈现更高效！' : '评估信息架构与复杂数据(如有)的呈现效率。'}
 </Constraints>
 <Example>
 ===TAB_OVERVIEW===
-\`\`\`json
-${isMulti ? '{"data":[{"name":"业务护城河","图1":85,"图2":60},{"name":"功能创新度","图1":70,"图2":90},{"name":"交互可用性","图1":95,"图2":50},{"name":"视觉高级感","图1":60,"图2":85},{"name":"转化效率","图1":90,"图2":40}]}' : '{"data":[{"name":"业务定位","分数":85},{"name":"功能逻辑","分数":70},{"name":"交互体验","分数":60},{"name":"视觉美学","分数":90},{"name":"转化漏斗","分数":88}]}'}
-\`\`\`
+### 📊 五维资产量化评分
+| 评估维度 | ${isMulti ? '图1得分 | 图2得分' : '得分'} |
+| :--- | :--- ${isMulti ? '| :--- ' : ''}|
+| 业务壁垒 | ${isMulti ? '85 | 60' : '85'} |
+| 功能创新 | ${isMulti ? '70 | 90' : '70'} |
+| 交互体验 | ${isMulti ? '95 | 50' : '95'} |
+| 视觉美学 | ${isMulti ? '60 | 85' : '60'} |
+| 转化效率 | ${isMulti ? '90 | 40' : '90'} |
 
 ### 🎯 北极星指标研判
-图1与图2虽同属下沉电商赛道，但图1的核心目标是通过**极端的信息密度**榨取单屏转化率；而图2则试图通过**品类弱化**来伪造高端感，这在下沉市场是一种极其傲慢且致命的战略误判。
+图1与图2同属金融理财赛道的资产收益看板。图1的核心目标是通过**极高密度的净值折线图**向高净值用户传递专业感与掌控感；而图2却试图用过大的字号和幼稚的柱状图弱化波动，这对于成熟投资者而言是极其傲慢的。
 
-### 🌍 行业基线锚定 (Industry Baseline)
-如果我们将行业天花板锚定为淘宝(手淘)的同类页面，图1勉强做到了及格线上的微创新，而图2在商品瀑布流的呈现效率上，甚至落后于行业两年前的平均标准心智。
+### 🌍 行业基线锚定
+如果我们将行业天花板锚定为淘宝(手淘)，图1勉强及格，而图2在商品瀑布流的呈现效率上，落后行业两年的标准心智。
 ...
 </Example>`,
         
@@ -1048,11 +1046,38 @@ ${tabContents[activeTab]}
         {/* 核心工作区：全屏三栏流式响应布局 */}
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start transition-all duration-500 w-full opacity-100">
           
-          {/* 第一栏 (左侧)：独立工作台 */}
-          <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[90px] z-10">
+          {/* 顶级原位平滑放大组件 (Smooth Zoom) */}
+          {lightboxImage && (
+            <div
+              className="fixed inset-0 z-[200] flex items-center justify-center p-4 sm:p-10 animate-in fade-in duration-300"
+              onClick={() => setLightboxImage(null)}
+            >
+              {/* 高斯模糊背景，不切断上下文 */}
+              <div className="absolute inset-0 bg-zinc-900/40 backdrop-blur-md"></div>
+              
+              {/* 核心大图容器 */}
+              <div className="relative z-10 max-w-full max-h-full flex flex-col items-center animate-in zoom-in-95 duration-400 ease-out">
+                <img
+                  src={lightboxImage}
+                  alt="Enlarged design"
+                  className="max-w-[90vw] max-h-[85vh] object-contain rounded-2xl shadow-2xl ring-1 ring-white/20 select-none cursor-zoom-out transition-transform duration-300 hover:scale-[1.02]"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setLightboxImage(null);
+                  }}
+                />
+                <div className="mt-6 px-4 py-2 bg-black/50 backdrop-blur-md text-white/90 text-sm font-medium rounded-full flex items-center gap-2 cursor-pointer hover:bg-black/70 transition-colors">
+                  <X className="w-4 h-4" /> 关闭 (或点击任意区域)
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 第一栏 (左侧)：独立工作台 (已注入顶级 Sticky 悬浮与隐形滚动条) */}
+          <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[90px] z-10 max-h-[calc(100vh-100px)] overflow-y-auto overflow-x-hidden custom-scrollbar pb-6">
             
             {/* 新增：苹果风 Segmented Control (分段控制器) */}
-            <div className="bg-zinc-100/80 p-1 rounded-2xl flex items-center shadow-inner">
+            <div className="bg-zinc-100/80 p-1 rounded-2xl flex items-center shadow-inner shrink-0">
               <button
                 onClick={() => setAnalyzeMode('single')}
                 className={`flex-1 py-2.5 text-sm font-semibold rounded-xl transition-all duration-300 ${
@@ -1113,34 +1138,57 @@ ${tabContents[activeTab]}
               </div>
             </div>
 
-            {/* 预览区 */}
+            {/* 预览区 (优化了网格布局，适配长工作台) */}
             {displayFiles.length > 0 ? (
-              <div key={`preview-zone-${analyzeMode}`} className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 transition-shadow duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-6">
+              <div key={`preview-zone-${analyzeMode}`} className="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-gray-100 transition-shadow duration-300 hover:shadow-[0_8px_30px_rgb(0,0,0,0.08)] p-6 shrink-0">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-sm font-semibold text-zinc-800">已选内容</h3>
+                  <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
+                    <ImageIcon className="w-4 h-4 text-blue-500" />已选内容
+                  </h3>
                   <span className="text-xs font-medium px-2 py-1 bg-zinc-100 rounded-md text-zinc-600">{displayFiles.length} 张图片</span>
                 </div>
-                <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar">
+                <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-3">
                   {displayFiles.map((file, index) => (
-                    <div key={`${file.preview}-${index}`} className="relative group shrink-0">
-                      <img
-                        src={file.preview}
-                        alt="preview"
-                        onClick={() => setLightboxImage(file.preview)}
-                        className="w-20 h-20 object-cover rounded-xl border border-black/5 cursor-zoom-in hover:opacity-90 transition-opacity"
-                        title="点击放大查看"
-                      />
+                    <div key={`${file.preview}-${index}`} className="relative group aspect-square">
+                      <div className="w-full h-full rounded-xl overflow-hidden border border-black/5 bg-zinc-50 relative">
+                        <img
+                          src={file.preview}
+                          alt={`preview-${index}`}
+                          className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-110"
+                          title="点击沉浸式看大图"
+                        />
+                        {/* 优雅的放大悬浮提示层 */}
+                        <div
+                          className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center cursor-zoom-in"
+                          onClick={() => setLightboxImage(file.preview)}
+                        >
+                          <div className="w-8 h-8 rounded-full bg-white/90 shadow-sm backdrop-blur-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
+                            <span className="text-zinc-800 font-bold text-xs">🔍</span>
+                          </div>
+                        </div>
+                      </div>
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
                           removeFile(index);
                         }}
-                        className="absolute -top-2 -right-2 w-6 h-6 bg-white shadow-md border border-zinc-100 text-zinc-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:text-red-500 hover:border-red-100"
+                        className="absolute -top-2 -right-2 w-6 h-6 bg-white shadow-md border border-zinc-100 text-zinc-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-500 hover:border-red-100 hover:scale-110 z-10"
                       >
                         <X className="w-3 h-3" />
                       </button>
+                      {analyzeMode === 'multiple' && (
+                        <div className="absolute -bottom-2 -left-2 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm border border-zinc-700 z-10">
+                          图{index + 1}
+                        </div>
+                      )}
                     </div>
                   ))}
+                </div>
+                <div className="mt-4 text-xs text-zinc-400 text-center bg-zinc-50 py-2 rounded-lg border border-zinc-100">
+                  <span className="flex items-center justify-center gap-1.5">
+                    <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    向下滑动阅读研报时，此面板将始终悬浮对照
+                  </span>
                 </div>
               </div>
             ) : null}
@@ -1149,7 +1197,7 @@ ${tabContents[activeTab]}
             <button
               onClick={handleAnalyze}
               disabled={allFiles.length === 0 || isAnalyzing}
-              className="bg-zinc-900 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98] disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed w-full py-4 text-base shadow-lg shadow-zinc-900/20 flex justify-center items-center gap-3"
+              className="bg-zinc-900 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98] disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed w-full py-4 text-base shadow-lg shadow-zinc-900/20 flex justify-center items-center gap-3 shrink-0"
             >
               {isAnalyzing ? (
                 <span key="analyzing" className="flex items-center gap-3">
@@ -1235,7 +1283,7 @@ ${tabContents[activeTab]}
                       {hasError ? (
                         <div key="error-box" className="whitespace-pre-wrap text-red-500 bg-red-50 p-6 rounded-2xl border border-red-100">{tabContents.overview}</div>
                       ) : (
-                        <div className="flex flex-col gap-6">
+                        <div className="flex flex-col gap-8">
                           {/* 四维度 Tab 导航栏 */}
                           {hasResult && (
                             <div className="flex bg-zinc-100/80 p-1.5 rounded-2xl shadow-inner overflow-x-auto custom-scrollbar shrink-0">
@@ -1274,81 +1322,28 @@ ${tabContents[activeTab]}
                             </div>
                           )}
 
-                          {/* 可视化雷达图区 (仅在综合总览Tab下，且解析出JSON数据时显示) */}
-                          {activeTab === 'overview' && useMemo(() => {
-                            try {
-                              const jsonMatch = tabContents.overview.match(/```json\n([\s\S]*?)\n```/);
-                              if (jsonMatch && jsonMatch[1]) {
-                                const parsedData = JSON.parse(jsonMatch[1]);
-                                if (parsedData.data && Array.isArray(parsedData.data)) {
-                                  const chartData = parsedData.data;
-                                  
-                                  // 判断是单图还是多图数据结构
-                                  const isMultiChart = Object.keys(chartData[0]).some(k => k.startsWith('图'));
-                                  
-                                  return (
-                                    <div className="mb-8 p-6 bg-zinc-50 rounded-2xl border border-zinc-100 flex flex-col items-center shadow-sm">
-                                      <h3 className="text-lg font-bold text-zinc-800 mb-6 flex items-center gap-2">
-                                        <BarChart2 className="w-5 h-5 text-blue-600" />
-                                        核心能力雷达图
-                                      </h3>
-                                      <div className="w-full max-w-[500px] h-[300px]">
-                                        <ResponsiveContainer width="100%" height="100%">
-                                          <RadarChart cx="50%" cy="50%" outerRadius="75%" data={chartData}>
-                                            <PolarGrid stroke="#e4e4e7" />
-                                            <PolarAngleAxis dataKey="name" tick={{ fill: '#52525b', fontSize: 13, fontWeight: 600 }} />
-                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tick={{ fill: '#a1a1aa', fontSize: 10 }} />
-                                            <RechartsTooltip
-                                              contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1)', padding: '12px 16px' }}
-                                              itemStyle={{ fontWeight: 600 }}
-                                            />
-                                            
-                                            {isMultiChart ? (
-                                              <>
-                                                {/* 动态渲染所有 "图X" 的多边形 */}
-                                                {Object.keys(chartData[0])
-                                                  .filter(k => k !== 'name')
-                                                  .map((key, i) => {
-                                                    const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b'];
-                                                    const color = colors[i % colors.length];
-                                                    return (
-                                                      <Radar
-                                                        key={key}
-                                                        name={key}
-                                                        dataKey={key}
-                                                        stroke={color}
-                                                        fill={color}
-                                                        fillOpacity={0.4}
-                                                      />
-                                                    );
-                                                })}
-                                              </>
-                                            ) : (
-                                              <Radar name="评分" dataKey="分数" stroke="#3b82f6" fill="#3b82f6" fillOpacity={0.5} />
-                                            )}
-                                          </RadarChart>
-                                        </ResponsiveContainer>
-                                      </div>
-                                    </div>
-                                  );
-                                }
-                              }
-                            } catch (e) {
-                              // JSON 解析失败则静默容错，不显示雷达图
-                            }
-                            return null;
-                          }, [tabContents.overview])}
-
-                          {/* Markdown 内容渲染区 (带切换动画) */}
-                          <div key={activeTab} className="animate-in slide-in-from-bottom-2 fade-in duration-300">
-                            <div className="w-full break-words max-w-full">
+                          {/* 独立的 Markdown 阅读区：彻底摒弃 JSON，恢复最高稳定性的纯净文字排版 */}
+                          <div key={activeTab} className="w-full bg-white rounded-3xl border border-zinc-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] overflow-hidden animate-in slide-in-from-bottom-2 fade-in duration-300">
+                            <div className="px-8 py-4 bg-zinc-50/50 border-b border-zinc-100 flex items-center justify-between">
+                              <div className="flex items-center gap-2">
+                                <div className="w-2 h-2 rounded-full bg-zinc-900"></div>
+                                <span className="text-sm font-bold text-zinc-800 tracking-wide uppercase">
+                                  {activeTab === 'overview' ? 'OVERVIEW REPORT' :
+                                   activeTab === 'business' ? 'BUSINESS REPORT' :
+                                   activeTab === 'ux' ? 'UX REPORT' : 'UI REPORT'}
+                                </span>
+                              </div>
+                              <div className="text-xs text-zinc-400 font-medium font-mono">
+                                AI EXPERT ANALYSIS
+                              </div>
+                            </div>
+                            <div className="p-8 md:p-12 w-full break-words max-w-full prose prose-zinc max-w-none">
                               <MarkdownErrorBoundary>
                                 <ReactMarkdown
                                   remarkPlugins={[remarkGfm]}
                                   components={markdownComponents}
                                 >
-                                  {/* 在渲染正文前，把大模型吐出来的 JSON 原始代码块隐藏掉，避免页面上出现两份数据 */}
-                                  {tabContents[activeTab].replace(/```json\n[\s\S]*?\n```/, '')}
+                                  {tabContents[activeTab]}
                                 </ReactMarkdown>
                               </MarkdownErrorBoundary>
                             </div>
