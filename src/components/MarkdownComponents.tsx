@@ -1,15 +1,30 @@
-// 极简主义阅读模式（类 Notion / 苹果风）
+/**
+ * 修复流式内容中 ### 前无换行导致渲染为纯文本的问题
+ */
+export const fixMarkdownHeadings = (text: string): string =>
+  text.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+
+// 极简主义阅读模式（类 Notion / 苹果风），标题加左侧色条装饰
 export const markdownComponents = {
-  h1: ({ children }: { children?: React.ReactNode }) =>
-    <h1 className="text-2xl font-bold text-zinc-900 mt-8 mb-4 tracking-tight">{children}</h1>,
-  h2: ({ children }: { children?: React.ReactNode }) =>
-    <h2 className="text-xl font-semibold text-zinc-900 mt-7 mb-4 tracking-tight">{children}</h2>,
-  h3: ({ children }: { children?: React.ReactNode }) =>
-    <h3 className="text-[17px] font-semibold text-zinc-900 mt-6 mb-3 tracking-tight">{children}</h3>,
+  h1: ({ children }: { children?: React.ReactNode }) => (
+    <h1 className="text-2xl font-bold text-zinc-900 mt-8 mb-4 tracking-tight pl-4 border-l-4 border-zinc-900">
+      {children}
+    </h1>
+  ),
+  h2: ({ children }: { children?: React.ReactNode }) => (
+    <h2 className="text-xl font-semibold text-zinc-900 mt-7 mb-4 tracking-tight pl-3 border-l-[3px] border-zinc-400">
+      {children}
+    </h2>
+  ),
+  h3: ({ children }: { children?: React.ReactNode }) => (
+    <h3 className="text-[17px] font-semibold text-zinc-800 mt-6 mb-3 tracking-tight pl-3 border-l-2 border-zinc-300">
+      {children}
+    </h3>
+  ),
   h4: ({ children }: { children?: React.ReactNode }) =>
     <h4 className="text-base font-medium text-zinc-800 mt-5 mb-2 tracking-tight">{children}</h4>,
   h5: ({ children }: { children?: React.ReactNode }) =>
-    <h5 className="text-sm font-medium text-zinc-700 mt-4 mb-2 tracking-tight uppercase">{children}</h5>,
+    <h5 className="text-sm font-medium text-zinc-500 mt-4 mb-2 tracking-tight uppercase">{children}</h5>,
   a: ({ children, href }: { children?: React.ReactNode; href?: string }) =>
     <a href={href} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:text-blue-800 hover:underline transition-colors">{children}</a>,
   p: ({ children }: { children?: React.ReactNode }) =>

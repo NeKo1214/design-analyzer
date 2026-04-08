@@ -2,7 +2,7 @@ import { Copy, Download, Check, Printer, Image as ImageIcon } from 'lucide-react
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MarkdownErrorBoundary } from './ErrorBoundary';
-import { markdownComponents } from './MarkdownComponents';
+import { markdownComponents, fixMarkdownHeadings } from './MarkdownComponents';
 import type { TabContents, TabKey, FileWithPreview } from '../types';
 
 interface ResultsPanelProps {
@@ -103,7 +103,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                       <div className="p-8 md:p-12 w-full break-words max-w-full">
                         <MarkdownErrorBoundary>
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents as any}>
-                            {tabContents[activeTab]}
+                            {fixMarkdownHeadings(tabContents[activeTab])}
                           </ReactMarkdown>
                         </MarkdownErrorBoundary>
                       </div>
