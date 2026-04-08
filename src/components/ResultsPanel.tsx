@@ -229,7 +229,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
           {/* 底部缩略图区域 */}
           {displayFiles.length === 2 && (
             /* 2 张：横向滚动条 */
-            <div className="flex gap-2 overflow-x-auto py-1 custom-scrollbar">
+            <div className="flex gap-2 overflow-x-auto p-1 custom-scrollbar">
               {displayFiles.map((file, index) => (
                 <button
                   key={index}
