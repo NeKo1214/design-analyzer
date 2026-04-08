@@ -1,4 +1,5 @@
-import { Copy, Download, Check, Printer, Image as ImageIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Copy, Download, Check, Printer, Image as ImageIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MarkdownErrorBoundary } from './ErrorBoundary';
@@ -33,6 +34,25 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
 
   // 对当前 tab 内容做 150ms 防抖，减少流式输出时 ReactMarkdown 高频重渲染导致的 removeChild 报错
   const debouncedContent = useDebounce(tabContents[activeTab], 150);
+
+  // 右侧图库当前展示的图片索引
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+
+  // 图片数量变化时重置索引（避免越界）
+  useEffect(() => {
+    setActiveImageIndex(0);
+  }, [displayFiles.length]);
+
+  // 键盘左右方向键切换图片
+  useEffect(() => {
+    if (displayFiles.length <= 1) return;
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowLeft') setActiveImageIndex(i => Math.max(0, i - 1));
+      if (e.key === 'ArrowRight') setActiveImageIndex(i => Math.min(displayFiles.length - 1, i + 1));
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [displayFiles.length]);
 
   return (
     <div className="flex-1 w-full flex flex-col xl:flex-row gap-6 lg:gap-10 items-start min-w-0">
@@ -142,19 +162,88 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
 
       {/* 右侧：图库停靠栏 */}
       {(!isAnalyzing && hasResult && !hasError && displayFiles.length > 0) && (
-        <div className="w-full xl:w-[320px] 2xl:w-[380px] shrink-0 flex flex-col gap-6 xl:sticky xl:top-[90px] xl:max-h-[calc(100vh-120px)] xl:overflow-y-auto custom-scrollbar xl:pr-2 pb-10">
-          <div className="text-sm font-semibold text-zinc-800 pb-3 border-b border-zinc-200/60 sticky top-0 bg-[#fbfbfd] z-10 pt-2">对照参考图库</div>
-          <div className="flex flex-col gap-6">
-            {displayFiles.map((file, index) => (
-              <div key={`preview-${index}`} className="flex flex-col gap-2.5">
-                <span className="text-[13px] font-bold text-zinc-700 bg-white shadow-sm border border-zinc-200 w-fit px-3 py-1 rounded-lg">图 {index + 1}</span>
-                <div className="rounded-2xl overflow-hidden border border-black/5 bg-white p-2 shadow-sm group">
-                  <img src={file.preview} alt={`图 ${index + 1}`} onClick={() => onLightbox(file.preview)}
-                    className="w-full object-contain rounded-xl cursor-zoom-in group-hover:opacity-90 transition-opacity" />
-                </div>
-              </div>
-            ))}
+        <div className="w-full xl:w-[320px] 2xl:w-[380px] shrink-0 flex flex-col gap-4 xl:sticky xl:top-[90px] xl:max-h-[calc(100vh-120px)] pb-10">
+          {/* 标题 */}
+          <div className="text-sm font-semibold text-zinc-800 pb-3 border-b border-zinc-200/60 flex items-center justify-between pt-2">
+            <span>对照参考图库</span>
+            {displayFiles.length > 1 && (
+              <span className="text-xs font-normal text-zinc-400">{activeImageIndex + 1} / {displayFiles.length}</span>
+            )}
           </div>
+
+          {/* Tab 切换栏（多图时显示） */}
+          {displayFiles.length > 1 && (
+            <div className="flex bg-zinc-100/80 p-1 rounded-xl shadow-inner gap-1">
+              {displayFiles.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImageIndex(index)}
+                  className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-300 ${
+                    activeImageIndex === index
+                      ? 'bg-white text-zinc-900 shadow-[0_2px_8px_rgb(0,0,0,0.08)]'
+                      : 'text-zinc-500 hover:text-zinc-700'
+                  }`}
+                >
+                  图 {index + 1}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* 主图展示区 */}
+          <div className="relative group rounded-2xl overflow-hidden border border-black/5 bg-white p-2 shadow-sm">
+            <img
+              key={activeImageIndex}
+              src={displayFiles[activeImageIndex]?.preview}
+              alt={`图 ${activeImageIndex + 1}`}
+              onClick={() => onLightbox(displayFiles[activeImageIndex]?.preview)}
+              className="w-full object-contain rounded-xl cursor-zoom-in transition-opacity duration-300 animate-in fade-in"
+            />
+            {/* 放大提示 */}
+            <div className="absolute inset-2 rounded-xl flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+              <div className="bg-black/40 backdrop-blur-sm text-white text-xs font-medium px-3 py-1.5 rounded-full">
+                🔍 点击放大
+              </div>
+            </div>
+            {/* 左右切换箭头（多图时显示） */}
+            {displayFiles.length > 1 && (
+              <>
+                <button
+                  onClick={e => { e.stopPropagation(); setActiveImageIndex(i => Math.max(0, i - 1)); }}
+                  disabled={activeImageIndex === 0}
+                  className="absolute left-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 shadow-md rounded-full flex items-center justify-center text-zinc-700 hover:bg-white transition-all opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={e => { e.stopPropagation(); setActiveImageIndex(i => Math.min(displayFiles.length - 1, i + 1)); }}
+                  disabled={activeImageIndex === displayFiles.length - 1}
+                  className="absolute right-4 top-1/2 -translate-y-1/2 w-8 h-8 bg-white/90 shadow-md rounded-full flex items-center justify-center text-zinc-700 hover:bg-white transition-all opacity-0 group-hover:opacity-100 disabled:opacity-30 disabled:cursor-not-allowed"
+                >
+                  <ChevronRight className="w-4 h-4" />
+                </button>
+              </>
+            )}
+          </div>
+
+          {/* 底部缩略图预览条（多图时显示） */}
+          {displayFiles.length > 1 && (
+            <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+              {displayFiles.map((file, index) => (
+                <button
+                  key={index}
+                  onClick={() => setActiveImageIndex(index)}
+                  className={`flex-shrink-0 w-14 h-14 rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                    activeImageIndex === index
+                      ? 'border-zinc-900 shadow-md scale-105'
+                      : 'border-transparent opacity-50 hover:opacity-80'
+                  }`}
+                >
+                  <img src={file.preview} alt={`缩略图 ${index + 1}`} className="w-full h-full object-cover" />
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       )}
     </div>
