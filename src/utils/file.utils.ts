@@ -62,13 +62,18 @@ export const parseTabContent = (fullText: string): TabContents => {
   cleaned = cleaned.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
   // 清洗孤立的 === 符号（前后无字母数字，防止误删合法内容）
   cleaned = cleaned.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '').trim();
-  // 清洗单独成行的孤立 # 符号
-  cleaned = cleaned.replace(/^#{1,6}\s*$/gm, '');
+  // 清洗单独成行的孤立 # 符号（只有 # 和空白，没有实质内容）
+  cleaned = cleaned.replace(/^(#{1,6})\s*$/gm, '');
   // 清洗单独成行的 --- 分隔线，但保留含 | 的表格行
   cleaned = cleaned.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
 
-  // 修复：确保 ### 标题前有换行，防止被解析为纯文本
-  cleaned = cleaned.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+  // 统一换行符
+  cleaned = cleaned.replace(/\r\n/g, '\n');
+  // 确保每个标题行前有空行（两个换行）
+  cleaned = cleaned.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+  cleaned = cleaned.replace(/\n(#{1,6}\s)/g, '\n\n$1');
+  // 清理超过两个连续空行
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
 
   // 标准分隔符模式
   if (cleaned.includes('===TAB_')) {

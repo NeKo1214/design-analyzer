@@ -10,16 +10,30 @@ import type { ReactNode } from 'react';
  */
 export const fixMarkdownHeadings = (text: string): string => {
   let result = text;
-  // 清洗残留的 ===TAB_XXX=== 分隔符行
+
+  // 1. 清洗残留的 ===TAB_XXX=== 分隔符行
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
-  // 清洗孤立的 === 符号
+
+  // 2. 清洗孤立的 === 符号（前后无字母数字）
   result = result.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
-  // 清洗单独成行且后面没有内容的孤立 # 行
-  result = result.replace(/^#{1,6}\s*$/gm, '');
-  // 清洗单独成行的 --- 分隔线，但必须确保该行不含 | （表格行含 |，不能误删）
+
+  // 3. 清洗单独成行的孤立 # 行（只有 # 符号和空白，没有实质标题内容）
+  //    匹配: 行首 + 1-6个# + 可选空白 + 行尾
+  result = result.replace(/^(#{1,6})\s*$/gm, '');
+
+  // 4. 清洗单独成行的 --- 分隔线，但保留含 | 的表格分隔行
   result = result.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
-  // 确保 ### 标题前有空行
-  result = result.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+
+  // 5. 对每个标题行（# 开头且后面有内容），确保其前面有两个换行（空行）
+  //    先把所有 \r\n 统一为 \n
+  result = result.replace(/\r\n/g, '\n');
+  //    在标题行前插入空行：匹配"非换行字符 + 换行 + 标题行"的情况
+  result = result.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
+  //    再处理"换行+换行+标题"已经有一个空行但前面还有内容的情况（确保至少两个换行）
+  result = result.replace(/\n(#{1,6}\s)/g, '\n\n$1');
+  //    清理因上面操作产生的超过两个连续空行
+  result = result.replace(/\n{3,}/g, '\n\n');
+
   return result;
 };
 
