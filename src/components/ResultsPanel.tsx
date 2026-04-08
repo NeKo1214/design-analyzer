@@ -3,6 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { MarkdownErrorBoundary } from './ErrorBoundary';
 import { markdownComponents, fixMarkdownHeadings } from './MarkdownComponents';
+import { useDebounce } from '../hooks/useDebounce';
 import type { TabContents, TabKey, FileWithPreview } from '../types';
 
 interface ResultsPanelProps {
@@ -29,6 +30,9 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
   const { tabContents, activeTab, setActiveTab, isAnalyzing, isCopied, rewriteInput, setRewriteInput, isRewriting, onCopy, onDownload, onRewrite, displayFiles, onLightbox } = props;
   const hasResult = !!(tabContents.overview || tabContents.business || tabContents.ux || tabContents.ui);
   const hasError = tabContents.overview.includes('❌ 分析失败');
+
+  // 对当前 tab 内容做 150ms 防抖，减少流式输出时 ReactMarkdown 高频重渲染导致的 removeChild 报错
+  const debouncedContent = useDebounce(tabContents[activeTab], 150);
 
   return (
     <div className="flex-1 w-full flex flex-col xl:flex-row gap-6 lg:gap-10 items-start min-w-0">
@@ -103,7 +107,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                       <div className="p-8 md:p-12 w-full break-words max-w-full">
                         <MarkdownErrorBoundary>
                           <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents as any}>
-                            {fixMarkdownHeadings(tabContents[activeTab])}
+                            {fixMarkdownHeadings(debouncedContent)}
                           </ReactMarkdown>
                         </MarkdownErrorBoundary>
                       </div>
