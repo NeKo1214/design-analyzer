@@ -110,7 +110,7 @@ function App() {
 
         <div className="flex flex-col lg:flex-row gap-6 lg:gap-10 items-start w-full">
           {/* 左侧工作台 */}
-          <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[90px] z-10 max-h-[calc(100vh-100px)] overflow-y-auto overflow-x-hidden custom-scrollbar pb-6">
+          <div className="w-full lg:w-[300px] xl:w-[340px] shrink-0 flex flex-col gap-6 lg:sticky lg:top-[90px] z-10 max-h-[calc(100vh-100px)] overflow-y-auto custom-scrollbar pb-6 px-3 -mx-3">
             {/* 分析模式切换 */}
             <div className="bg-zinc-100/80 p-1 rounded-2xl flex items-center shadow-inner shrink-0">
               {(['single', 'multiple'] as AnalyzeMode[]).map(mode => (

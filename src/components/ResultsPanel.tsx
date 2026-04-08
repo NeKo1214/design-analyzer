@@ -250,7 +250,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
             /* 3 张及以上：网格布局，超出可横向滚动 */
             <div className="flex flex-col gap-2">
               <p className="text-[11px] text-zinc-400 font-medium">点击缩略图切换查看</p>
-              <div className="grid grid-cols-4 gap-2 overflow-x-auto custom-scrollbar pb-1 p-1">
+              <div className="grid grid-cols-4 gap-2 custom-scrollbar pb-1 p-1 overflow-visible">
                 {displayFiles.map((file, index) => (
                   <button
                     key={index}
