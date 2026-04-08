@@ -64,8 +64,8 @@ export const parseTabContent = (fullText: string): TabContents => {
   cleaned = cleaned.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '').trim();
   // 清洗单独成行的孤立 # 符号
   cleaned = cleaned.replace(/^#{1,6}\s*$/gm, '');
-  // 清洗单独成行的 --- 分隔线
-  cleaned = cleaned.replace(/^-{3,}\s*$/gm, '');
+  // 清洗单独成行的 --- 分隔线，但保留含 | 的表格行
+  cleaned = cleaned.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
 
   // 修复：确保 ### 标题前有换行，防止被解析为纯文本
   cleaned = cleaned.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');

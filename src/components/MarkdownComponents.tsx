@@ -14,10 +14,10 @@ export const fixMarkdownHeadings = (text: string): string => {
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
   // 清洗孤立的 === 符号
   result = result.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
-  // 清洗单独成行且后面没有内容的孤立 # 行（如 AI 输出 "# \n" 这种）
+  // 清洗单独成行且后面没有内容的孤立 # 行
   result = result.replace(/^#{1,6}\s*$/gm, '');
-  // 清洗连续 --- 单独成行形成的分隔线（保留 Markdown 中合法的表格分隔，只清洗单独成行的）
-  result = result.replace(/^-{3,}\s*$/gm, '');
+  // 清洗单独成行的 --- 分隔线，但必须确保该行不含 | （表格行含 |，不能误删）
+  result = result.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
   // 确保 ### 标题前有空行
   result = result.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
   return result;
