@@ -17,7 +17,7 @@ interface SettingsPanelProps {
 }
 
 export const SettingsPanel = (props: SettingsPanelProps) => {
-  const { apiKey, setApiKey, baseUrl: _baseUrl, setBaseUrl, model, setModel, customBaseUrl, setCustomBaseUrl, customModelId, setCustomModelId, onClose } = props;
+  const { apiKey, setApiKey, setBaseUrl, model, setModel, customBaseUrl, setCustomBaseUrl, customModelId, setCustomModelId, onClose } = props;
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (

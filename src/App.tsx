@@ -7,8 +7,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { HistoryPanel } from './components/HistoryPanel';
 import { FileUpload } from './components/FileUpload';
 import { ResultsPanel } from './components/ResultsPanel';
-import { parseTabContent } from './utils/file.utils';
-import { fileToBase64 } from './utils/file.utils';
+import { parseTabContent, fileToBase64 } from './utils/file.utils';
 import type { FileWithPreview, AnalyzeMode, HistoryItem } from './types';
 
 function App() {

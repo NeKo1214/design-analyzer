@@ -45,4 +45,4 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <App />
     </GlobalErrorBoundary>
   </React.StrictMode>,
-)
+);
