@@ -229,7 +229,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
           {/* 底部缩略图区域 */}
           {displayFiles.length === 2 && (
             /* 2 张：横向滚动条 */
-            <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
+            <div className="flex gap-2 overflow-x-auto py-1 custom-scrollbar">
               {displayFiles.map((file, index) => (
                 <button
                   key={index}
@@ -250,7 +250,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
             /* 3 张及以上：网格布局，超出可横向滚动 */
             <div className="flex flex-col gap-2">
               <p className="text-[11px] text-zinc-400 font-medium">点击缩略图切换查看</p>
-              <div className="grid grid-cols-4 gap-2 overflow-x-auto custom-scrollbar pb-1">
+              <div className="grid grid-cols-4 gap-2 overflow-x-auto custom-scrollbar pb-1 p-1">
                 {displayFiles.map((file, index) => (
                   <button
                     key={index}

@@ -60,8 +60,8 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-3">
             {displayFiles.map((file, index) => (
-              <div key={`${file.preview}-${index}`} className="relative group aspect-square">
-                <div className="w-full h-full rounded-xl overflow-hidden border border-black/5 bg-zinc-50 relative">
+              <div key={`${file.preview}-${index}`} className="relative group aspect-square p-1">
+                <div className="w-full h-full rounded-xl overflow-hidden border border-[#eeeeee] bg-zinc-50 relative">
                   <img src={file.preview} alt={`preview-${index}`} className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center cursor-zoom-in" onClick={() => onLightbox(file.preview)}>
                     <div className="w-8 h-8 rounded-full bg-white/90 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
@@ -70,20 +70,14 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
                   </div>
                 </div>
                 <button onClick={e => { e.stopPropagation(); removeFile(index); }}
-                  className="absolute -top-2 -right-2 w-6 h-6 bg-white shadow-md border border-zinc-100 text-zinc-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-500 z-10">
+                  className="absolute -top-1.5 -right-1.5 w-6 h-6 bg-white shadow-md border border-zinc-100 text-zinc-800 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-all duration-300 hover:bg-red-50 hover:text-red-500 z-10">
                   <X className="w-3 h-3" />
                 </button>
                 {analyzeMode === 'multiple' && (
-                  <div className="absolute -bottom-2 -left-2 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm z-10">图{index + 1}</div>
+                  <div className="absolute -bottom-1.5 -left-1.5 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm z-10">图{index + 1}</div>
                 )}
               </div>
             ))}
-          </div>
-          <div className="mt-4 text-xs text-zinc-400 text-center bg-zinc-50 py-2 rounded-lg border border-zinc-100">
-            <span className="flex items-center justify-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-              向下滑动阅读研报时，此面板将始终悬浮对照
-            </span>
           </div>
         </div>
       )}

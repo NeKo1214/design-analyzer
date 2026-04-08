@@ -4,7 +4,9 @@ import type { ReactNode } from 'react';
  * 修复流式内容中的渲染问题：
  * 1. 清洗残留的 ===TAB_XXX=== 分隔符
  * 2. 清洗孤立的 === 符号
- * 3. 确保 ### 标题前有换行
+ * 3. 清洗行首孤立的 # 符号（非标题，如 "# " 后紧跟换行或文档末尾）
+ * 4. 清洗多余的 --- 水平线（连续3个以上短横线单独成行）
+ * 5. 确保 ### 标题前有换行
  */
 export const fixMarkdownHeadings = (text: string): string => {
   let result = text;
@@ -12,6 +14,10 @@ export const fixMarkdownHeadings = (text: string): string => {
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
   // 清洗孤立的 === 符号
   result = result.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
+  // 清洗单独成行且后面没有内容的孤立 # 行（如 AI 输出 "# \n" 这种）
+  result = result.replace(/^#{1,6}\s*$/gm, '');
+  // 清洗连续 --- 单独成行形成的分隔线（保留 Markdown 中合法的表格分隔，只清洗单独成行的）
+  result = result.replace(/^-{3,}\s*$/gm, '');
   // 确保 ### 标题前有空行
   result = result.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
   return result;
