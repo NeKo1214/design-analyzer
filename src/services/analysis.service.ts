@@ -84,7 +84,7 @@ export const runAnalysis = async (opts: RunAnalysisOptions): Promise<[string, st
         { role: 'system', content: prompts[key] },
         { role: 'user', content: content.filter(Boolean) },
       ],
-      temperature: 0.7,
+      temperature: 0.3,
       stream: true,
     }, (text) => {
       setTabContents(prev => ({ ...prev, [key]: text }));
