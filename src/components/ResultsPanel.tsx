@@ -171,8 +171,8 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
             )}
           </div>
 
-          {/* Tab 切换栏（多图时显示） */}
-          {displayFiles.length > 1 && (
+          {/* Tab 切换栏（仅 2 张图时显示） */}
+          {displayFiles.length === 2 && (
             <div className="flex bg-zinc-100/80 p-1 rounded-xl shadow-inner gap-1">
               {displayFiles.map((_, index) => (
                 <button
@@ -226,8 +226,9 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
             )}
           </div>
 
-          {/* 底部缩略图预览条（多图时显示） */}
-          {displayFiles.length > 1 && (
+          {/* 底部缩略图区域 */}
+          {displayFiles.length === 2 && (
+            /* 2 张：横向滚动条 */
             <div className="flex gap-2 overflow-x-auto pb-1 custom-scrollbar">
               {displayFiles.map((file, index) => (
                 <button
@@ -242,6 +243,34 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                   <img src={file.preview} alt={`缩略图 ${index + 1}`} className="w-full h-full object-cover" />
                 </button>
               ))}
+            </div>
+          )}
+
+          {displayFiles.length >= 3 && (
+            /* 3 张及以上：网格布局，超出可横向滚动 */
+            <div className="flex flex-col gap-2">
+              <p className="text-[11px] text-zinc-400 font-medium">点击缩略图切换查看</p>
+              <div className="grid grid-cols-4 gap-2 overflow-x-auto custom-scrollbar pb-1">
+                {displayFiles.map((file, index) => (
+                  <button
+                    key={index}
+                    onClick={() => setActiveImageIndex(index)}
+                    className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
+                      activeImageIndex === index
+                        ? 'border-zinc-900 shadow-md scale-105'
+                        : 'border-zinc-100 opacity-60 hover:opacity-90 hover:border-zinc-300'
+                    }`}
+                  >
+                    <img src={file.preview} alt={`缩略图 ${index + 1}`} className="w-full h-full object-cover" />
+                    {/* 序号角标 */}
+                    <div className={`absolute bottom-1 right-1 text-[10px] font-bold px-1.5 py-0.5 rounded-md leading-none transition-colors ${
+                      activeImageIndex === index ? 'bg-zinc-900 text-white' : 'bg-black/40 text-white'
+                    }`}>
+                      {index + 1}
+                    </div>
+                  </button>
+                ))}
+              </div>
             </div>
           )}
         </div>
