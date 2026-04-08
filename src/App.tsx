@@ -56,6 +56,8 @@ function App() {
         return f as FileWithPreview;
       });
       setAllFiles(files);
+      // 按图片数量自动切换模式：多图自动切换为多图对比
+      setAnalyzeMode(files.length > 1 ? 'multiple' : 'single');
     }
     setShowHistory(false);
   };

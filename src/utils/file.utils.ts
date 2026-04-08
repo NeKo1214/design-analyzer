@@ -47,47 +47,61 @@ export const fileToBase64 = (file: File): Promise<string> => {
 };
 
 /**
+ * 对单个 Tab 的内容做标题清洗（与 MarkdownComponents.fixMarkdownHeadings 保持一致）
+ */
+export const cleanTabContent = (text: string): string => {
+  let result = text;
+  result = result.replace(/\r\n/g, '\n');
+  // 清洗孤立 # 行（只有 # 和空白，无实质标题内容）
+  result = result.replace(/^#{1,6}\s*$/gm, '');
+  // 清洗独立 --- 分隔线，保留含 | 的表格行
+  result = result.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
+  // 清洗孤立 === 符号
+  result = result.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
+  // 确保标题行前有空行：先处理"非换行 + 换行 + 标题"
+  result = result.replace(/([^\n])\n(#{1,6} )/g, '$1\n\n$2');
+  // 再确保所有"换行 + 标题"都变成"两个换行 + 标题"
+  result = result.replace(/\n(#{1,6} )/g, '\n\n$1');
+  // 压缩超过两个连续空行
+  result = result.replace(/\n{3,}/g, '\n\n');
+  return result.trim();
+};
+
+/**
  * 解析完整 Markdown 文本，拆分为 4 个 Tab 内容
- * 修复：贪婪匹配改为非贪婪，防止正则 ReDoS
  */
 export const parseTabContent = (fullText: string): TabContents => {
   const tabs: TabContents = { overview: '', business: '', ux: '', ui: '' };
   if (!fullText) return tabs;
 
   // 剔除思考链标签及外层 markdown 代码块标记
-  let cleaned = fullText.replace(/<Thought_Process>[\s\S]*?<\/Thought_Process>/gi, '').trim();
-  cleaned = cleaned.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
+  let text = fullText.replace(/<Thought_Process>[\s\S]*?<\/Thought_Process>/gi, '').trim();
+  text = text.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
 
-  // 清洗残留的 ===TAB_XXX=== 分隔符行（整行或行内）
-  cleaned = cleaned.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
-  // 清洗孤立的 === 符号（前后无字母数字，防止误删合法内容）
-  cleaned = cleaned.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '').trim();
-  // 清洗单独成行的孤立 # 符号（只有 # 和空白，没有实质内容）
-  cleaned = cleaned.replace(/^(#{1,6})\s*$/gm, '');
-  // 清洗单独成行的 --- 分隔线，但保留含 | 的表格行
-  cleaned = cleaned.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
-
-  // 统一换行符
-  cleaned = cleaned.replace(/\r\n/g, '\n');
-  // 确保每个标题行前有空行（两个换行）
-  cleaned = cleaned.replace(/([^\n])\n(#{1,6}\s)/g, '$1\n\n$2');
-  cleaned = cleaned.replace(/\n(#{1,6}\s)/g, '\n\n$1');
-  // 清理超过两个连续空行
-  cleaned = cleaned.replace(/\n{3,}/g, '\n\n');
-
-  // 标准分隔符模式
-  if (cleaned.includes('===TAB_')) {
-    const parts = cleaned.split('===TAB_');
-    parts.forEach(part => {
-      if (part.startsWith('OVERVIEW===')) tabs.overview = part.replace('OVERVIEW===', '').trim();
-      else if (part.startsWith('BUSINESS===')) tabs.business = part.replace('BUSINESS===', '').trim();
-      else if (part.startsWith('UX===')) tabs.ux = part.replace('UX===', '').trim();
-      else if (part.startsWith('UI===')) tabs.ui = part.replace('UI===', '').trim();
-    });
+  // 【关键修复】先用原始文本做分隔符拆分（在清洗前），避免清洗误删分隔符
+  if (text.includes('===TAB_')) {
+    const parts = text.split(/===TAB_([A-Z_]+)===/);
+    // split 结果: [before, key1, content1, key2, content2, ...]
+    for (let i = 1; i < parts.length; i += 2) {
+      const key = parts[i];
+      const content = (parts[i + 1] || '').trim();
+      if (key === 'OVERVIEW') tabs.overview = cleanTabContent(content);
+      else if (key === 'BUSINESS') tabs.business = cleanTabContent(content);
+      else if (key === 'UX') tabs.ux = cleanTabContent(content);
+      else if (key === 'UI') tabs.ui = cleanTabContent(content);
+    }
     return tabs;
   }
 
-  // 降级：标题关键字匹配（非贪婪，防止 ReDoS）
+  // 降级：先整体清洗，再按关键词拆分
+  let cleaned = text.replace(/\r\n/g, '\n');
+  cleaned = cleaned.replace(/^#{1,6}\s*$/gm, '');
+  cleaned = cleaned.replace(/^(?!\s*\|)-{3,}\s*$/gm, '');
+  cleaned = cleaned.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
+  cleaned = cleaned.replace(/([^\n])\n(#{1,6} )/g, '$1\n\n$2');
+  cleaned = cleaned.replace(/\n(#{1,6} )/g, '\n\n$1');
+  cleaned = cleaned.replace(/\n{3,}/g, '\n\n').trim();
+
   const overviewRegex = /(?:#+\s*(?:🌟\s*)?综合总览|第[一1]部分[:：]?\s*综合总览|【综合总览】)/i;
   const businessRegex = /(?:#+\s*(?:📦\s*)?产品功能|第[二2]部分[:：]?\s*产品功能|【产品功能】)/i;
   const uxRegex = /(?:#+\s*(?:👆\s*)?交互体验|第[三3]部分[:：]?\s*交互体验|【交互体验】)/i;
