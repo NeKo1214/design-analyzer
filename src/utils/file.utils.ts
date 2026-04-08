@@ -58,6 +58,11 @@ export const parseTabContent = (fullText: string): TabContents => {
   let cleaned = fullText.replace(/<Thought_Process>[\s\S]*?<\/Thought_Process>/gi, '').trim();
   cleaned = cleaned.replace(/^```markdown\s*/gi, '').replace(/^```\s*/gi, '').replace(/```\s*$/g, '').trim();
 
+  // 清洗残留的 ===TAB_XXX=== 分隔符行（整行或行内）
+  cleaned = cleaned.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
+  // 清洗孤立的 === 符号（前后无字母数字，防止误删合法内容）
+  cleaned = cleaned.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '').trim();
+
   // 修复：确保 ### 标题前有换行，防止被解析为纯文本
   cleaned = cleaned.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
 

@@ -1,10 +1,21 @@
 import type { ReactNode } from 'react';
 
 /**
- * 修复流式内容中 ### 前无换行导致渲染为纯文本的问题
+ * 修复流式内容中的渲染问题：
+ * 1. 清洗残留的 ===TAB_XXX=== 分隔符
+ * 2. 清洗孤立的 === 符号
+ * 3. 确保 ### 标题前有换行
  */
-export const fixMarkdownHeadings = (text: string): string =>
-  text.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+export const fixMarkdownHeadings = (text: string): string => {
+  let result = text;
+  // 清洗残留的 ===TAB_XXX=== 分隔符行
+  result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
+  // 清洗孤立的 === 符号
+  result = result.replace(/(?<![a-zA-Z0-9])===(?![a-zA-Z0-9])/g, '');
+  // 确保 ### 标题前有空行
+  result = result.replace(/([^\n])(#{1,6}\s)/g, '$1\n\n$2');
+  return result;
+};
 
 // 极简主义阅读模式（类 Notion / 苹果风），标题加左侧色条装饰
 export const markdownComponents = {

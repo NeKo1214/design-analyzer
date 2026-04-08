@@ -191,7 +191,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
           )}
 
           {/* 主图展示区 */}
-          <div className="relative group rounded-2xl overflow-hidden border border-black/5 bg-white p-2 shadow-sm">
+          <div className="relative group rounded-2xl overflow-hidden border border-[#eeeeee] bg-white p-2 shadow-sm">
             <img
               key={activeImageIndex}
               src={displayFiles[activeImageIndex]?.preview}
@@ -258,7 +258,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                     className={`relative aspect-square rounded-xl overflow-hidden border-2 transition-all duration-300 ${
                       activeImageIndex === index
                         ? 'border-zinc-900 shadow-md scale-105'
-                        : 'border-zinc-100 opacity-60 hover:opacity-90 hover:border-zinc-300'
+                        : 'border-[#eeeeee] opacity-60 hover:opacity-90 hover:border-zinc-300'
                     }`}
                   >
                     <img src={file.preview} alt={`缩略图 ${index + 1}`} className="w-full h-full object-cover" />
