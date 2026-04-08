@@ -68,7 +68,15 @@ export const runAnalysis = async (opts: RunAnalysisOptions): Promise<[string, st
   });
 
   const fetchExpert = async (key: TabKey): Promise<string> => {
-    const userText = `请在输出报告前，先在内部推演核心痛点并确定要引用的专业定律。推演结束后，必须以 \`===TAB_${key.toUpperCase()}===\` 作为分界线，然后严格模仿极其专业、刻薄的文风输出正式的 Markdown 内容！`;
+    const userText = `【第一步：页面类型识别（内部推演，不输出）】
+请先在内部判断该页面属于哪种类型：电商/工具产品/内容资讯/金融数据/社交/SaaS/引导落地页/空状态页/其他。
+基于识别到的页面类型，自动切换对应行业的最高标准来展开后续分析（例如：电商对标 Amazon/淘宝，SaaS 对标 Notion/Linear，金融对标 Bloomberg/Robinhood）。
+
+【第二步：核心痛点推演（内部推演，不输出）】
+确定最严重的 3 个问题，以及要引用的专业理论依据。
+
+【第三步：输出报告】
+必须以 \`===TAB_${key.toUpperCase()}===\` 作为输出的第一行，然后严格按照 system prompt 中的 Markdown 骨架填充内容，语言极其专业、犀利、一针见血！`;
     const content = [{ type: 'text', text: userText }, ...baseUserContent];
     return streamSSE(url, apiKey, {
       model: finalModel,
