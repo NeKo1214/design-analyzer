@@ -81,7 +81,7 @@ export const markdownComponents = {
     <blockquote className="pl-4 py-2 my-4 border-l-2 border-zinc-200 text-zinc-500 text-[15px] leading-relaxed not-italic bg-transparent">{children}</blockquote>,
   table: ({ children }: { children?: ReactNode }) => (
     <div className="overflow-x-auto my-6 border border-zinc-100 rounded-xl">
-      <table className="w-full text-[14px] text-left border-collapse m-0 table-fixed">{children}</table>
+      <table className="w-full text-[14px] text-left border-collapse m-0">{children}</table>
     </div>
   ),
   thead: ({ children }: { children?: ReactNode }) =>
@@ -90,20 +90,22 @@ export const markdownComponents = {
     <tbody className="divide-y divide-zinc-50">{children}</tbody>,
   th: ({ children }: { children?: ReactNode }) => {
     const text = String(children ?? '');
-    // 「状态」列固定宽度居中
     const isStatus = text === '状态' || /^[✅⚠️❌]+$/.test(text);
     return (
-      <th className={`px-4 py-3 font-medium whitespace-nowrap ${isStatus ? 'w-20 text-center' : ''}`}>
+      <th className={`px-4 py-3 font-medium align-top whitespace-nowrap ${isStatus ? 'w-16 text-center' : ''}`}>
         {children}
       </th>
     );
   },
   td: ({ children }: { children?: ReactNode }) => {
     const text = String(children ?? '');
-    // 纯 emoji 内容居中（状态列）
     const isEmoji = /^[\s✅⚠️❌]+$/.test(text);
+    // 短值列（高/中/低、是/否 等）不换行
+    const isShortValue = !isEmoji && text.length <= 6;
     return (
-      <td className={`px-4 py-3 text-zinc-600 align-top leading-relaxed break-words ${isEmoji ? 'text-center w-20' : ''}`}>
+      <td className={`px-4 py-3 text-zinc-600 align-top leading-relaxed break-words
+        ${isEmoji ? 'text-center w-16 whitespace-nowrap' : ''}
+        ${isShortValue ? 'whitespace-nowrap' : ''}`}>
         {children}
       </td>
     );
