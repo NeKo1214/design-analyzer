@@ -11,10 +11,6 @@ import type { ReactNode } from 'react';
 export const fixMarkdownHeadings = (text: string): string => {
   let result = text;
 
-  // 0. 过滤「零、市场归属裁决/对标方向」章节（对用户无阅读价值，仅供 AI 内部定向）
-  //    匹配 ## 零、... 直到下一个 ## 一、 或文档结束
-  result = result.replace(/## 零、[\s\S]*?(?=## [一二三四五六七八九十]、|$)/g, '');
-
   // 1. 清洗残留的 ===TAB_XXX=== 分隔符行
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
 
@@ -88,28 +84,10 @@ export const markdownComponents = {
     <thead className="bg-zinc-50/50 border-b border-zinc-100 text-zinc-500">{children}</thead>,
   tbody: ({ children }: { children?: ReactNode }) =>
     <tbody className="divide-y divide-zinc-50">{children}</tbody>,
-  th: ({ children }: { children?: ReactNode }) => {
-    const text = String(children ?? '');
-    const isStatus = text === '状态' || /^[✅⚠️❌]+$/.test(text);
-    return (
-      <th className={`px-4 py-3 font-medium align-top whitespace-nowrap ${isStatus ? 'w-16 text-center' : ''}`}>
-        {children}
-      </th>
-    );
-  },
-  td: ({ children }: { children?: ReactNode }) => {
-    const text = String(children ?? '');
-    const isEmoji = /^[\s✅⚠️❌]+$/.test(text);
-    // 短值列（高/中/低、是/否 等）不换行
-    const isShortValue = !isEmoji && text.length <= 6;
-    return (
-      <td className={`px-4 py-3 text-zinc-600 align-top leading-relaxed break-words
-        ${isEmoji ? 'text-center w-16 whitespace-nowrap' : ''}
-        ${isShortValue ? 'whitespace-nowrap' : ''}`}>
-        {children}
-      </td>
-    );
-  },
+  th: ({ children }: { children?: ReactNode }) =>
+    <th className="px-4 py-3 font-medium whitespace-nowrap">{children}</th>,
+  td: ({ children }: { children?: ReactNode }) =>
+    <td className="px-4 py-3 text-zinc-600 align-top leading-relaxed break-words">{children}</td>,
   pre: ({ children }: { children?: ReactNode }) =>
     <pre className="overflow-x-auto bg-zinc-50 border border-zinc-100 text-zinc-700 p-4 rounded-2xl text-[14px] leading-[1.8] my-4 custom-scrollbar break-words whitespace-pre-wrap font-sans">{children}</pre>,
   code: ({ inline, children }: { inline?: boolean; children?: ReactNode }) => {
