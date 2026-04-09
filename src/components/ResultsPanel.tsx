@@ -77,9 +77,9 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
         </div>
 
         <div className="flex-1 flex flex-col items-center">
-          <div className="w-full max-w-[820px]">
+          <div className="w-full max-w-[820px] flex flex-col flex-1">
             {(!hasResult && !isAnalyzing) ? (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-400 mt-32">
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-400 py-20">
                 <div className="w-20 h-20 bg-zinc-50 rounded-full flex items-center justify-center mb-6">
                   <ImageIcon className="w-8 h-8 text-zinc-300" />
                 </div>
@@ -87,7 +87,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                 <p className="text-sm">上传图片后，AI 将在这里输出专业的洞察</p>
               </div>
             ) : isAnalyzing ? (
-              <div className="h-full flex flex-col items-center justify-center text-zinc-800 mt-32 space-y-6">
+              <div className="flex-1 flex flex-col items-center justify-center text-zinc-800 py-20 space-y-6">
                 <div className="relative">
                   <div className="w-16 h-16 border-4 border-zinc-100 rounded-full"></div>
                   <div className="w-16 h-16 border-4 border-zinc-900 rounded-full border-t-transparent animate-spin absolute top-0 left-0"></div>
