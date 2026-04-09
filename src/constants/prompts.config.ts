@@ -6,21 +6,37 @@ const n = (i: number) => NUMS[i - 1] ?? String(i);
 // 双轨对标词库
 const BENCHMARKS = {
   cn: {
-    ecommerce: '京东/淘宝/拼多多/得物',
-    social: '微信/微博/小红书/抖音',
-    finance: '支付宝/招商银行/富途牛牛/同花顺',
-    saas: '飞书/钉钉/企业微信/金山文档',
-    tool: '美团/高德地图/滴滴/百度地图',
-    content: '抖音/B站/知乎/微信公众号',
+    ecommerce: '京东/淘宝/拼多多/得物/唯品会/天猫/闲鱼',
+    social: '微信/微博/小红书/抖音/QQ/快手/Soul',
+    finance: '支付宝/招商银行/富途牛牛/同花顺/微信支付/工商银行/雪球',
+    saas: '飞书/钉钉/企业微信/金山文档/腾讯文档/石墨文档/Teambition',
+    tool: '美团/高德地图/滴滴/百度地图/饿了么/货拉拉/顺丰',
+    content: '抖音/B站/知乎/微信公众号/今日头条/喜马拉雅/网易云音乐',
+    health: '丁香医生/京东健康/平安好医生/微医',
+    education: '作业帮/猿辅导/得到/网易公开课/腾讯课堂',
+    travel: '12306/携程/去哪儿/飞猪/同程',
+    crm: '销售易/纷享销客/有赞/微盟',
+    game: '王者荣耀/网易游戏/腾讯游戏/米哈游',
+    iot: '小米智能家居/华为智慧生活/涂鸦智能',
+    gov: '支付宝政务/粤省事/随申办/国家政务服务',
+    lifestyle: 'Boss直聘/安居客/贝壳找房/汽车之家',
     general: '微信/支付宝/美团/小红书',
   },
   global: {
-    ecommerce: 'Amazon/Shopify/eBay',
-    social: 'Instagram/Twitter/TikTok',
-    finance: 'Bloomberg/Robinhood/Revolut',
-    saas: 'Notion/Linear/Figma/Stripe',
-    tool: 'Google Maps/Uber/Airbnb',
-    content: 'YouTube/Medium/Substack',
+    ecommerce: 'Amazon/Shopify/eBay/Etsy/Walmart/ASOS',
+    social: 'Instagram/Twitter/TikTok/Facebook/LinkedIn/Pinterest/Reddit',
+    finance: 'Bloomberg/Robinhood/Revolut/Stripe/PayPal/Wise/Coinbase',
+    saas: 'Notion/Linear/Figma/Slack/Jira/Asana/Monday.com/Airtable',
+    tool: 'Google Maps/Uber/Airbnb/Lyft/Booking.com/Expedia',
+    content: 'YouTube/Medium/Substack/Spotify/Netflix/Apple Music',
+    health: 'Apple Health/Calm/Headspace/MyFitnessPal',
+    education: 'Duolingo/Coursera/Khan Academy/Udemy',
+    crm: 'Salesforce/HubSpot/Zendesk/Intercom',
+    game: 'Steam/Epic Games/Xbox/Discord',
+    iot: 'Apple HomeKit/Google Nest/Samsung SmartThings',
+    gov: 'GOV.UK/Singapore MyInfo/Estonia e-Residency',
+    devtool: 'GitHub/Vercel/Postman/Datadog',
+    design: 'Figma/Framer/Canva/Adobe XD',
     general: 'Apple/Google/Stripe/Airbnb',
   },
 };
@@ -30,14 +46,14 @@ const buildMarketInstruction = (marketMode: MarketMode): string => {
   if (marketMode === 'cn') {
     return `【对标市场锁定：国内本土化】
 分析必须基于中国本土市场标准：
-- 对标标杆优先使用国内头部产品：${BENCHMARKS.cn.general}等
+- 对标标杆优先使用国内头部产品，覆盖电商(${BENCHMARKS.cn.ecommerce})、社交(${BENCHMARKS.cn.social})、金融(${BENCHMARKS.cn.finance})、SaaS(${BENCHMARKS.cn.saas})、工具(${BENCHMARKS.cn.tool})、内容(${BENCHMARKS.cn.content})、医疗(${BENCHMARKS.cn.health})、教育(${BENCHMARKS.cn.education})、出行(${BENCHMARKS.cn.travel})、游戏(${BENCHMARKS.cn.game})等赛道
 - 评判标准须考虑中国用户习惯（高信息密度、强功能入口、红包/优惠券心智、社交裂变路径）
 - 禁止用国际极简主义标准评判国内信息密集型设计为"cluttered"`;
   }
   if (marketMode === 'global') {
     return `【对标市场锁定：国际化】
 分析必须基于国际市场标准：
-- 对标标杆优先使用国际头部产品：${BENCHMARKS.global.general}等
+- 对标标杆优先使用国际头部产品，覆盖电商(${BENCHMARKS.global.ecommerce})、社交(${BENCHMARKS.global.social})、金融(${BENCHMARKS.global.finance})、SaaS(${BENCHMARKS.global.saas})、工具(${BENCHMARKS.global.tool})、内容(${BENCHMARKS.global.content})、医疗(${BENCHMARKS.global.health})、教育(${BENCHMARKS.global.education})、开发工具(${BENCHMARKS.global.devtool})、设计工具(${BENCHMARKS.global.design})等赛道
 - 评判标准须考虑欧美用户习惯（极简导航、大留白、单一CTA、隐私优先）
 - 国际化字体、多语言适配、RTL布局潜力均需纳入评估维度`;
   }
@@ -62,6 +78,14 @@ const buildBenchmarkRef = (marketMode: MarketMode): string => {
 - SaaS/办公 → ${BENCHMARKS.cn.saas}
 - 工具/O2O → ${BENCHMARKS.cn.tool}
 - 内容资讯 → ${BENCHMARKS.cn.content}
+- 医疗健康 → ${BENCHMARKS.cn.health}
+- 教育/学习 → ${BENCHMARKS.cn.education}
+- 出行/交通 → ${BENCHMARKS.cn.travel}
+- 企业服务/CRM → ${BENCHMARKS.cn.crm}
+- 游戏/娱乐 → ${BENCHMARKS.cn.game}
+- 智能硬件/IoT → ${BENCHMARKS.cn.iot}
+- 政务/公共 → ${BENCHMARKS.cn.gov}
+- 泛生活服务 → ${BENCHMARKS.cn.lifestyle}
 指出与对应标杆的最大差距，并说明差距根因。`;
   }
   if (marketMode === 'global') {
@@ -72,11 +96,19 @@ const buildBenchmarkRef = (marketMode: MarketMode): string => {
 - SaaS/办公 → ${BENCHMARKS.global.saas}
 - 工具/出行 → ${BENCHMARKS.global.tool}
 - 内容资讯 → ${BENCHMARKS.global.content}
+- 医疗健康 → ${BENCHMARKS.global.health}
+- 教育/学习 → ${BENCHMARKS.global.education}
+- 企业服务/CRM → ${BENCHMARKS.global.crm}
+- 游戏/娱乐 → ${BENCHMARKS.global.game}
+- 智能硬件/IoT → ${BENCHMARKS.global.iot}
+- 政务/公共 → ${BENCHMARKS.global.gov}
+- 开发者工具 → ${BENCHMARKS.global.devtool}
+- 设计工具 → ${BENCHMARKS.global.design}
 指出与对应标杆的最大差距，并说明差距根因。`;
   }
   return `基于「零、市场归属裁决」的结论，自动选择对应赛道标杆进行越级对比：
-- 若判定为国内：电商→${BENCHMARKS.cn.ecommerce}，金融→${BENCHMARKS.cn.finance}，SaaS→${BENCHMARKS.cn.saas}，社交→${BENCHMARKS.cn.social}
-- 若判定为国际：电商→${BENCHMARKS.global.ecommerce}，金融→${BENCHMARKS.global.finance}，SaaS→${BENCHMARKS.global.saas}，社交→${BENCHMARKS.global.social}
+- 若判定为国内：电商→${BENCHMARKS.cn.ecommerce}，金融→${BENCHMARKS.cn.finance}，SaaS→${BENCHMARKS.cn.saas}，社交→${BENCHMARKS.cn.social}，医疗→${BENCHMARKS.cn.health}，教育→${BENCHMARKS.cn.education}，出行→${BENCHMARKS.cn.travel}，游戏→${BENCHMARKS.cn.game}
+- 若判定为国际：电商→${BENCHMARKS.global.ecommerce}，金融→${BENCHMARKS.global.finance}，SaaS→${BENCHMARKS.global.saas}，社交→${BENCHMARKS.global.social}，医疗→${BENCHMARKS.global.health}，教育→${BENCHMARKS.global.education}，工具→${BENCHMARKS.global.tool}，游戏→${BENCHMARKS.global.game}
 - 若判定为混合：国内外各引用一个标杆进行双轨对比
 指出与对应标杆的最大差距，并说明差距根因。`;
 };
