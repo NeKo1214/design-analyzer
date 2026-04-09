@@ -7,9 +7,13 @@ import type { ReactNode } from 'react';
  * 3. 清洗行首孤立的 # 符号（非标题，如 "# " 后紧跟换行或文档末尾）
  * 4. 清洗多余的 --- 水平线（连续3个以上短横线单独成行）
  * 5. 确保 ### 标题前有换行
+ * 6. 过滤「零、市场归属裁决 / 零、市场对标方向」章节（AI 内部定向，对用户无阅读价值）
  */
 export const fixMarkdownHeadings = (text: string): string => {
   let result = text;
+
+  // 0. 过滤「零、」章节：从 "## 零、" 开始，到下一个 "## " 或文档末尾（流式阶段可能尚未出现下一章节，用 lookahead 兼容）
+  result = result.replace(/## 零、[\s\S]*?(?=\n## |\n===TAB_|$)/g, '');
 
   // 1. 清洗残留的 ===TAB_XXX=== 分隔符行
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
