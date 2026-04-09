@@ -1,5 +1,10 @@
-export interface FileWithPreview extends File {
+// #11: 用组合代替继承，避免强行扩展 File 对象的类型不安全问题
+export interface FileWithPreview {
+  file: File;
   preview: string;
+  name: string;
+  size: number;
+  type: string;
 }
 
 export interface ModelConfig {

@@ -9,18 +9,21 @@ interface RunAnalysisOptions {
   base64Images: string[];
   isMulti: boolean;
   setTabContents: React.Dispatch<React.SetStateAction<TabContents>>;
+  signal?: AbortSignal; // #1: 支持中止
 }
 
 const streamSSE = async (
   url: string,
   apiKey: string,
   body: object,
-  onDelta: (text: string) => void
+  onDelta: (text: string) => void,
+  signal?: AbortSignal // #1
 ): Promise<string> => {
   const res = await fetch(url, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey.trim()}` },
     body: JSON.stringify(body),
+    signal, // #1: 传入 signal
   });
 
   if (!res.ok) throw new Error(`HTTP ${res.status}`);
@@ -31,33 +34,63 @@ const streamSSE = async (
   let fullText = '';
 
   if (reader) {
-    while (true) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      buffer += decoder.decode(value, { stream: true });
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-      for (const line of lines) {
-        const trimmed = line.trim();
-        if (!trimmed || trimmed === 'data: [DONE]') continue;
-        if (trimmed.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(trimmed.slice(6));
-            const delta = data.choices?.[0]?.delta?.content;
-            if (delta) {
-              fullText += delta;
-              onDelta(fullText);
-            }
-          } catch { /* ignore parse errors */ }
+    try {
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        // #1: 检测中止信号
+        if (signal?.aborted) {
+          reader.cancel();
+          break;
+        }
+        buffer += decoder.decode(value, { stream: true });
+        const lines = buffer.split('\n');
+        buffer = lines.pop() || '';
+        for (const line of lines) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed === 'data: [DONE]') continue;
+          if (trimmed.startsWith('data: ')) {
+            try {
+              const data = JSON.parse(trimmed.slice(6));
+              const delta = data.choices?.[0]?.delta?.content;
+              if (delta) {
+                fullText += delta;
+                onDelta(fullText);
+              }
+            } catch { /* ignore parse errors */ }
+          }
         }
       }
+    } finally {
+      reader.releaseLock();
     }
   }
   return fullText;
 };
 
+// #6: 单 Tab 最多重试 1 次
+const fetchWithRetry = async (
+  fn: () => Promise<string>,
+  maxRetries = 1
+): Promise<string> => {
+  let lastError: unknown;
+  for (let i = 0; i <= maxRetries; i++) {
+    try {
+      return await fn();
+    } catch (err) {
+      // #1: 若是主动中止，不重试直接抛出
+      if (err instanceof DOMException && err.name === 'AbortError') throw err;
+      lastError = err;
+      if (i < maxRetries) {
+        await new Promise(r => setTimeout(r, 1000 * (i + 1))); // 指数退避
+      }
+    }
+  }
+  throw lastError;
+};
+
 export const runAnalysis = async (opts: RunAnalysisOptions): Promise<[string, string, string, string]> => {
-  const { apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents } = opts;
+  const { apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents, signal } = opts;
   const prompts = buildExpertPrompts(isMulti);
   const url = `${finalBaseUrl.replace(/\/+$/, '')}/chat/completions`;
 
@@ -67,29 +100,22 @@ export const runAnalysis = async (opts: RunAnalysisOptions): Promise<[string, st
     baseUserContent.push({ type: 'image_url', image_url: { url: base64 } });
   });
 
-  const fetchExpert = async (key: TabKey): Promise<string> => {
-    const userText = `【第一步：页面类型识别（内部推演，不输出）】
-请先在内部判断该页面属于哪种类型：电商/工具产品/内容资讯/金融数据/社交/SaaS/引导落地页/空状态页/其他。
-基于识别到的页面类型，自动切换对应行业的最高标准来展开后续分析（例如：电商对标 Amazon/淘宝，SaaS 对标 Notion/Linear，金融对标 Bloomberg/Robinhood）。
-
-【第二步：核心痛点推演（内部推演，不输出）】
-确定最严重的 3 个问题，以及要引用的专业理论依据。
-
-【第三步：输出报告】
-必须以 \`===TAB_${key.toUpperCase()}===\` 作为输出的第一行，然后严格按照 system prompt 中的 Markdown 骨架填充内容，语言极其专业、犀利、一针见血！`;
-    const content = [{ type: 'text', text: userText }, ...baseUserContent];
-    return streamSSE(url, apiKey, {
-      model: finalModel,
-      messages: [
-        { role: 'system', content: prompts[key] },
-        { role: 'user', content: content.filter(Boolean) },
-      ],
-      temperature: 0.3,
-      stream: true,
-    }, (text) => {
-      setTabContents(prev => ({ ...prev, [key]: text }));
+  const fetchExpert = (key: TabKey): Promise<string> =>
+    fetchWithRetry(() => { // #6: 包裹重试
+      const userText = `【第一步：页面类型识别（内部推演，不输出）】\n请先在内部判断该页面属于哪种类型：电商/工具产品/内容资讯/金融数据/社交/SaaS/引导落地页/空状态页/其他。\n基于识别到的页面类型，自动切换对应行业的最高标准来展开后续分析（例如：电商对标 Amazon/淘宝，SaaS 对标 Notion/Linear，金融对标 Bloomberg/Robinhood）。\n\n【第二步：核心痛点推演（内部推演，不输出）】\n确定最严重的 3 个问题，以及要引用的专业理论依据。\n\n【第三步：输出报告】\n必须以 \`===TAB_${key.toUpperCase()}===\` 作为输出的第一行，然后严格按照 system prompt 中的 Markdown 骨架填充内容，语言极其专业、犀利、一针见血！`;
+      const content = [{ type: 'text', text: userText }, ...baseUserContent];
+      return streamSSE(url, apiKey, {
+        model: finalModel,
+        messages: [
+          { role: 'system', content: prompts[key] },
+          { role: 'user', content },
+        ],
+        temperature: 0.3,
+        stream: true,
+      }, (text) => {
+        setTabContents(prev => ({ ...prev, [key]: text }));
+      }, signal); // #1
     });
-  };
 
   const results = await Promise.all([
     fetchExpert('overview'),
@@ -109,6 +135,7 @@ interface RunRewriteOptions {
   currentContent: string;
   rewriteInput: string;
   displayFiles: FileWithPreview[];
+  isMulti: boolean; // #3: 传入多图模式标志
   setTabContents: React.Dispatch<React.SetStateAction<TabContents>>;
 }
 
@@ -117,10 +144,15 @@ const TAB_NAME_MAP: Record<TabKey, string> = {
 };
 
 export const runRewrite = async (opts: RunRewriteOptions): Promise<string> => {
-  const { apiKey, finalBaseUrl, finalModel, activeTab, currentContent, rewriteInput, displayFiles, setTabContents } = opts;
+  const { apiKey, finalBaseUrl, finalModel, activeTab, currentContent, rewriteInput, displayFiles, isMulti, setTabContents } = opts;
   const url = `${finalBaseUrl.replace(/\/+$/, '')}/chat/completions`;
 
-  const prompt = `你现在是一位专注在【${TAB_NAME_MAP[activeTab]}】领域的资深设计专家。
+  // #3: 多图模式附加铁律约束
+  const multiRule = isMulti
+    ? '\n\n【多图分析铁律】每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！输出格式与原始报告保持一致。'
+    : '';
+
+  const prompt = `你现在是一位专注在【${TAB_NAME_MAP[activeTab]}】领域的资深设计专家。${multiRule}
 我刚刚对页面进行了一次完整的分析，你在该维度给我的原始分析内容是：
 """
 ${currentContent}

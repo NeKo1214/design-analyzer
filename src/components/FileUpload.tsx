@@ -1,6 +1,7 @@
 import { useCallback } from 'react';
 import { useDropzone } from 'react-dropzone';
 import { Upload, X, Image as ImageIcon } from 'lucide-react';
+import { createFileWithPreview } from '../utils/file.utils';
 import type { FileWithPreview, AnalyzeMode } from '../types';
 
 interface FileUploadProps {
@@ -16,7 +17,8 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
 
   const onDrop = useCallback((acceptedFiles: File[]) => {
     if (!acceptedFiles || acceptedFiles.length === 0) return;
-    const newFiles = acceptedFiles.map(f => Object.assign(f, { preview: URL.createObjectURL(f) })) as FileWithPreview[];
+    // #11: 使用安全封装函数
+    const newFiles = acceptedFiles.map(f => createFileWithPreview(f));
     const filesToAdd = analyzeMode === 'single' ? [newFiles[0]] : newFiles;
     const valid = filesToAdd.filter(Boolean);
     if (valid.length > 0) setAllFiles([...allFiles, ...valid]);
@@ -47,6 +49,9 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
               ? '已选择图片。如需更改，请先删除下方图片。'
               : analyzeMode === 'single' ? '点击或拖拽至此处，进行深入的视觉与交互剖析' : '支持拖拽多张图片进行深度横向对比'}
           </p>
+          {analyzeMode === 'multiple' && (
+            <p className="text-xs text-zinc-400 mt-2">最多支持 4 张图片</p>
+          )}
         </div>
       </div>
 
@@ -56,7 +61,7 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
             <h3 className="text-sm font-semibold text-zinc-800 flex items-center gap-2">
               <ImageIcon className="w-4 h-4 text-blue-500" />已选内容
             </h3>
-            <span className="text-xs font-medium px-2 py-1 bg-zinc-100 rounded-md text-zinc-600">{displayFiles.length} 张图片</span>
+            <span className="text-xs font-medium px-2 py-1 bg-zinc-100 rounded-md text-zinc-600\">{displayFiles.length} 张图片</span>
           </div>
           <div className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-3 gap-3">
             {displayFiles.map((file, index) => (
@@ -65,7 +70,7 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
                   <img src={file.preview} alt={`preview-${index}`} className="w-full h-full object-cover cursor-zoom-in transition-transform duration-500 group-hover:scale-110" />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-300 flex items-center justify-center cursor-zoom-in" onClick={() => onLightbox(file.preview)}>
                     <div className="w-8 h-8 rounded-full bg-white/90 shadow-sm flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300 transform translate-y-2 group-hover:translate-y-0">
-                      <span className="text-zinc-800 font-bold text-xs">🔍</span>
+                      <span className="text-zinc-800 font-bold text-xs\">🔍</span>
                     </div>
                   </div>
                 </div>
@@ -74,7 +79,7 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
                   <X className="w-3 h-3" />
                 </button>
                 {analyzeMode === 'multiple' && (
-                  <div className="absolute -bottom-1.5 -left-1.5 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm z-10">图{index + 1}</div>
+                  <div className="absolute -bottom-1.5 -left-1.5 bg-zinc-900 text-white text-[10px] font-bold px-2 py-0.5 rounded-md shadow-sm z-10\">图{index + 1}</div>
                 )}
               </div>
             ))}

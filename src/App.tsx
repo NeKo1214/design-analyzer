@@ -50,11 +50,13 @@ function App() {
     analysis.setTabContents(parseTabContent(item.markdown));
     analysis.setActiveTab('overview');
     if (item.images && item.images.length > 0) {
-      const files = item.images.map((img, i) => {
-        const f = new File([], `history-image-${i}.png`, { type: 'image/png' });
-        (f as FileWithPreview).preview = img;
-        return f as FileWithPreview;
-      });
+      const files: FileWithPreview[] = item.images.map((img, i) => ({
+        file: new File([], `history-image-${i}.png`, { type: 'image/png' }),
+        preview: img,
+        name: `history-image-${i}.png`,
+        size: 0,
+        type: 'image/png',
+      }));
       setAllFiles(files);
       // 按图片数量自动切换模式：多图自动切换为多图对比
       setAnalyzeMode(files.length > 1 ? 'multiple' : 'single');
@@ -64,12 +66,13 @@ function App() {
 
   const handleDownload = () => {
     const { tabContents } = analysis;
+    // #12: 导出含 ===TAB=== 分隔符的格式，便于后续重新导入分析
     const text = [
-      '# 🌟 综合总览\n', tabContents.overview,
-      '# 📦 产品功能\n', tabContents.business,
-      '# 👆 交互体验\n', tabContents.ux,
-      '# 🎨 设计样式\n', tabContents.ui,
-    ].filter(Boolean).join('\n\n');
+      '===TAB_OVERVIEW===\n', tabContents.overview,
+      '\n\n===TAB_BUSINESS===\n', tabContents.business,
+      '\n\n===TAB_UX===\n', tabContents.ux,
+      '\n\n===TAB_UI===\n', tabContents.ui,
+    ].filter(Boolean).join('\n');
     if (!text.trim()) return;
     const blob = new Blob([text], { type: 'text/markdown;charset=utf-8' });
     const url = URL.createObjectURL(blob);
@@ -126,15 +129,21 @@ function App() {
             <FileUpload analyzeMode={analyzeMode} allFiles={allFiles} setAllFiles={setAllFiles} onLightbox={setLightboxImage} />
 
             {/* 分析按钮 */}
-            <button onClick={() => analysis.handleAnalyze(displayFiles, analyzeMode)}
-              disabled={allFiles.length === 0 || analysis.isAnalyzing}
-              className="bg-zinc-900 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98] disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed w-full py-4 text-base shadow-lg shadow-zinc-900/20 flex justify-center items-center gap-3 shrink-0">
-              {analysis.isAnalyzing ? (
-                <><span className="inline-block w-5 h-5 border-[2.5px] border-white/30 border-t-white rounded-full animate-spin"></span><span>分析中...</span></>
-              ) : (
-                <><BarChart2 className="w-5 h-5" /><span>生成{allFiles.length > 1 ? '对比分析' : '分析'}报告</span></>
-              )}
-            </button>
+            {analysis.isAnalyzing ? (
+              <div className="flex gap-2">
+                <button onClick={analysis.handleCancel}
+                  className="flex-1 bg-red-500 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-red-600 active:scale-[0.98] w-full py-4 text-base shadow-lg shadow-red-500/20 flex justify-center items-center gap-3 shrink-0">
+                  <span>取消分析</span>
+                </button>
+              </div>
+            ) : (
+              <button onClick={() => analysis.handleAnalyze(displayFiles, analyzeMode)}
+                disabled={allFiles.length === 0}
+                className="bg-zinc-900 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98] disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed w-full py-4 text-base shadow-lg shadow-zinc-900/20 flex justify-center items-center gap-3 shrink-0">
+                <BarChart2 className="w-5 h-5" />
+                <span>生成{analyzeMode === 'multiple' ? '对比分析' : '分析'}报告</span>
+              </button>
+            )}
           </div>
 
           {/* 右侧结果区 */}
@@ -149,7 +158,7 @@ function App() {
             isRewriting={analysis.isRewriting}
             onCopy={analysis.handleCopy}
             onDownload={handleDownload}
-            onRewrite={() => analysis.handleRewrite(displayFiles)}
+            onRewrite={() => analysis.handleRewrite(displayFiles, analyzeMode === 'multiple' && displayFiles.length > 1)}
             displayFiles={displayFiles}
             onLightbox={setLightboxImage}
           />

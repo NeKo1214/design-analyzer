@@ -1,11 +1,23 @@
-import type { TabContents } from '../types';
+import type { TabContents, FileWithPreview } from '../types';
 
 const MAX_SIZE = 1200;
 
 /**
- * 将 File 对象转为 base64 JPEG 字符串（修复内存泄漏：URL 会被及时释放）
+ * #11: 安全创建 FileWithPreview 对象（组合式，不再强行扩展 File）
  */
-export const fileToBase64 = (file: File): Promise<string> => {
+export const createFileWithPreview = (file: File): FileWithPreview => ({
+  file,
+  preview: URL.createObjectURL(file),
+  name: file.name,
+  size: file.size,
+  type: file.type,
+});
+
+/**
+ * 将 FileWithPreview 或 File 对象转为 base64 JPEG 字符串
+ */
+export const fileToBase64 = (fileOrWrapper: FileWithPreview | File): Promise<string> => {
+  const file = (fileOrWrapper as FileWithPreview).file ?? (fileOrWrapper as File);
   return new Promise((resolve, reject) => {
     const img = new Image();
     const objectUrl = URL.createObjectURL(file);

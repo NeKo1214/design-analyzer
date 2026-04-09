@@ -19,16 +19,26 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
   const [isCopied, setIsCopied] = useState(false);
   const [rewriteInput, setRewriteInput] = useState('');
   const [isRewriting, setIsRewriting] = useState(false);
+  const [abortController, setAbortController] = useState<AbortController | null>(null); // #1
 
   const { apiKey, baseUrl, model, customBaseUrl, customModelId, onSaveHistory } = options;
 
   const handleAnalyze = useCallback(async (displayFiles: FileWithPreview[], analyzeMode: AnalyzeMode) => {
     if (!apiKey) { alert('请先点击右上角设置您的 API Key'); return; }
     if (displayFiles.length === 0) { alert('请至少上传一张图片'); return; }
+    // #5: 多图模式最多4张
+    if (analyzeMode === 'multiple' && displayFiles.length > 4) {
+      alert('多图对比模式最多支持 4 张图片，请减少图片数量');
+      return;
+    }
 
     setIsAnalyzing(true);
     setTabContents({ overview: '', business: '', ux: '', ui: '' });
     setActiveTab('overview');
+
+    // #1: 创建 AbortController
+    const controller = new AbortController();
+    setAbortController(controller);
 
     try {
       const finalBaseUrl = customBaseUrl.trim() || baseUrl;
@@ -40,25 +50,33 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
       }
 
       const isMulti = analyzeMode === 'multiple' && displayFiles.length > 1;
-      const results = await runAnalysis({ apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents });
+      const results = await runAnalysis({ apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents, signal: controller.signal });
 
       const finalMarkdown = `===TAB_OVERVIEW===\n${results[0]}\n\n===TAB_BUSINESS===\n${results[1]}\n\n===TAB_UX===\n${results[2]}\n\n===TAB_UI===\n${results[3]}\n\n`;
-      onSaveHistory(`多维专家分析 - ${new Date().toLocaleString('zh-CN')}`, finalMarkdown);
+
+      // #7: 历史标题含模式+图片数量
+      const title = `${analyzeMode === 'multiple' ? '多图对比' : '单图深度'}(${displayFiles.length}张) - ${new Date().toLocaleString('zh-CN')}`;
+      onSaveHistory(title, finalMarkdown);
     } catch (error: unknown) {
+      if (error instanceof DOMException && error.name === 'AbortError') {
+        setTabContents({ overview: '分析已取消', business: '', ux: '', ui: '' });
+        return;
+      }
       const msg = error instanceof Error ? error.message : '未知网络错误';
       setTabContents(prev => ({ ...prev, overview: `❌ 分析失败：\n${msg}\n\n🔍 **排查建议**：\n1. 检查 API Key 是否正确\n2. 检查网络连接` }));
     } finally {
       setIsAnalyzing(false);
+      setAbortController(null);
     }
   }, [apiKey, baseUrl, model, customBaseUrl, customModelId, onSaveHistory]);
 
-  const handleRewrite = useCallback(async (displayFiles: FileWithPreview[]) => {
+  const handleRewrite = useCallback(async (displayFiles: FileWithPreview[], isMulti: boolean) => { // #3: 传入 isMulti
     if (!rewriteInput.trim() || !apiKey) return;
     setIsRewriting(true);
     try {
       const finalBaseUrl = customBaseUrl.trim() || baseUrl;
       const finalModel = customModelId.trim() || model;
-      const newContent = await runRewrite({ apiKey, finalBaseUrl, finalModel, activeTab, currentContent: tabContents[activeTab], rewriteInput, displayFiles, setTabContents });
+      const newContent = await runRewrite({ apiKey, finalBaseUrl, finalModel, activeTab, currentContent: tabContents[activeTab], rewriteInput, displayFiles, isMulti, setTabContents });
       const newTabs = { ...tabContents, [activeTab]: newContent };
       const fullText = `===TAB_OVERVIEW===\n${newTabs.overview}\n\n===TAB_BUSINESS===\n${newTabs.business}\n\n===TAB_UX===\n${newTabs.ux}\n\n===TAB_UI===\n${newTabs.ui}`;
       onSaveHistory(`修改后分析 - ${new Date().toLocaleString('zh-CN')}`, fullText);
@@ -78,6 +96,13 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
     setTimeout(() => setIsCopied(false), 2000);
   }, [tabContents]);
 
+  // #1: 提供取消函数
+  const handleCancel = useCallback(() => {
+    if (abortController) {
+      abortController.abort();
+    }
+  }, [abortController]);
+
   return {
     tabContents, setTabContents,
     activeTab, setActiveTab,
@@ -85,6 +110,6 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
     isCopied,
     rewriteInput, setRewriteInput,
     isRewriting,
-    handleAnalyze, handleRewrite, handleCopy,
+    handleAnalyze, handleRewrite, handleCopy, handleCancel,
   };
 };
