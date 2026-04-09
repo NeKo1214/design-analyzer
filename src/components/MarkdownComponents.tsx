@@ -11,6 +11,10 @@ import type { ReactNode } from 'react';
 export const fixMarkdownHeadings = (text: string): string => {
   let result = text;
 
+  // 0. 过滤「零、市场归属裁决/对标方向」章节（对用户无阅读价值，仅供 AI 内部定向）
+  //    匹配 ## 零、... 直到下一个 ## 一、 或文档结束
+  result = result.replace(/## 零、[\s\S]*?(?=## [一二三四五六七八九十]、|$)/g, '');
+
   // 1. 清洗残留的 ===TAB_XXX=== 分隔符行
   result = result.replace(/^===TAB_[A-Z_]+=== *\n?/gm, '');
 
