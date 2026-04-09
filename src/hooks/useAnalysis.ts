@@ -1,5 +1,5 @@
 import { useState, useCallback } from 'react';
-import type { TabContents, TabKey, FileWithPreview, AnalyzeMode } from '../types';
+import type { TabContents, TabKey, FileWithPreview, AnalyzeMode, MarketMode } from '../types';
 import { fileToBase64 } from '../utils/file.utils';
 import { runAnalysis, runRewrite } from '../services/analysis.service';
 
@@ -23,7 +23,7 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
 
   const { apiKey, baseUrl, model, customBaseUrl, customModelId, onSaveHistory } = options;
 
-  const handleAnalyze = useCallback(async (displayFiles: FileWithPreview[], analyzeMode: AnalyzeMode) => {
+  const handleAnalyze = useCallback(async (displayFiles: FileWithPreview[], analyzeMode: AnalyzeMode, marketMode: MarketMode = 'auto') => {
     if (!apiKey) { alert('请先点击右上角设置您的 API Key'); return; }
     if (displayFiles.length === 0) { alert('请至少上传一张图片'); return; }
     // #5: 多图模式最多4张
@@ -50,7 +50,7 @@ export const useAnalysis = (options: UseAnalysisOptions) => {
       }
 
       const isMulti = analyzeMode === 'multiple' && displayFiles.length > 1;
-      const results = await runAnalysis({ apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents, signal: controller.signal });
+      const results = await runAnalysis({ apiKey, finalBaseUrl, finalModel, base64Images, isMulti, marketMode, setTabContents, signal: controller.signal });
 
       const finalMarkdown = `===TAB_OVERVIEW===\n${results[0]}\n\n===TAB_BUSINESS===\n${results[1]}\n\n===TAB_UX===\n${results[2]}\n\n===TAB_UI===\n${results[3]}\n\n`;
 

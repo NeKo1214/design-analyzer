@@ -26,6 +26,9 @@ export type TabKey = keyof TabContents;
 
 export type AnalyzeMode = 'single' | 'multiple';
 
+// 对标市场方向：cn=国内本土化，global=国际化，auto=AI自动识别
+export type MarketMode = 'cn' | 'global' | 'auto';
+
 export interface HistoryItem {
   id: string;
   title: string;

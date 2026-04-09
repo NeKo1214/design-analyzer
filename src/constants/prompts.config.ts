@@ -1,17 +1,141 @@
+import type { MarketMode } from '../types';
+
 const NUMS = ['一', '二', '三', '四', '五', '六', '七', '八', '九', '十'];
 const n = (i: number) => NUMS[i - 1] ?? String(i);
 
-export const buildExpertPrompts = (isMulti: boolean) => ({
-  overview: `你是一位顶尖的产品设计评审专家，拥有大厂首席设计师与产品架构师的双重视角。
+// 双轨对标词库
+const BENCHMARKS = {
+  cn: {
+    ecommerce: '京东/淘宝/拼多多/得物',
+    social: '微信/微博/小红书/抖音',
+    finance: '支付宝/招商银行/富途牛牛/同花顺',
+    saas: '飞书/钉钉/企业微信/金山文档',
+    tool: '美团/高德地图/滴滴/百度地图',
+    content: '抖音/B站/知乎/微信公众号',
+    general: '微信/支付宝/美团/小红书',
+  },
+  global: {
+    ecommerce: 'Amazon/Shopify/eBay',
+    social: 'Instagram/Twitter/TikTok',
+    finance: 'Bloomberg/Robinhood/Revolut',
+    saas: 'Notion/Linear/Figma/Stripe',
+    tool: 'Google Maps/Uber/Airbnb',
+    content: 'YouTube/Medium/Substack',
+    general: 'Apple/Google/Stripe/Airbnb',
+  },
+};
+
+// 根据 marketMode 生成市场前置指令
+const buildMarketInstruction = (marketMode: MarketMode): string => {
+  if (marketMode === 'cn') {
+    return `【对标市场锁定：国内本土化】
+分析必须基于中国本土市场标准：
+- 对标标杆优先使用国内头部产品：${BENCHMARKS.cn.general}等
+- 评判标准须考虑中国用户习惯（高信息密度、强功能入口、红包/优惠券心智、社交裂变路径）
+- 禁止用国际极简主义标准评判国内信息密集型设计为"cluttered"`;
+  }
+  if (marketMode === 'global') {
+    return `【对标市场锁定：国际化】
+分析必须基于国际市场标准：
+- 对标标杆优先使用国际头部产品：${BENCHMARKS.global.general}等
+- 评判标准须考虑欧美用户习惯（极简导航、大留白、单一CTA、隐私优先）
+- 国际化字体、多语言适配、RTL布局潜力均需纳入评估维度`;
+  }
+  // auto
+  return `【对标市场：AI自动识别，必须先完成市场归属裁决】
+在输出任何分析之前，必须先在内部完成以下判断（判断过程不输出）：
+1. 语言密度：汉字为主 vs 英文为主
+2. 交互范式：多tab/高密度功能入口 vs 单CTA/极简导航
+3. 视觉风格：信息密集/渐变氛围 vs 大留白/扁平极简
+4. 品牌基因：中文产品名/红色暖色系 vs 英文命名/中性色系
+基于以上判断，自动选择对标体系：国内（${BENCHMARKS.cn.general}等）or 国际（${BENCHMARKS.global.general}等）or 混合双轨。
+然后在报告的「零、市场归属裁决」章节中输出判断结果。`;
+};
+
+// 生成行业基线对标词（根据市场方向动态切换）
+const buildBenchmarkRef = (marketMode: MarketMode): string => {
+  if (marketMode === 'cn') {
+    return `基于页面类型，与国内该赛道的绝对标杆进行越级对比：
+- 电商/零售 → ${BENCHMARKS.cn.ecommerce}
+- 社交/内容 → ${BENCHMARKS.cn.social}
+- 金融/数据 → ${BENCHMARKS.cn.finance}
+- SaaS/办公 → ${BENCHMARKS.cn.saas}
+- 工具/O2O → ${BENCHMARKS.cn.tool}
+- 内容资讯 → ${BENCHMARKS.cn.content}
+指出与对应标杆的最大差距，并说明差距根因。`;
+  }
+  if (marketMode === 'global') {
+    return `基于页面类型，与国际该赛道的绝对标杆进行越级对比：
+- 电商/零售 → ${BENCHMARKS.global.ecommerce}
+- 社交/内容 → ${BENCHMARKS.global.social}
+- 金融/数据 → ${BENCHMARKS.global.finance}
+- SaaS/办公 → ${BENCHMARKS.global.saas}
+- 工具/出行 → ${BENCHMARKS.global.tool}
+- 内容资讯 → ${BENCHMARKS.global.content}
+指出与对应标杆的最大差距，并说明差距根因。`;
+  }
+  return `基于「零、市场归属裁决」的结论，自动选择对应赛道标杆进行越级对比：
+- 若判定为国内：电商→${BENCHMARKS.cn.ecommerce}，金融→${BENCHMARKS.cn.finance}，SaaS→${BENCHMARKS.cn.saas}，社交→${BENCHMARKS.cn.social}
+- 若判定为国际：电商→${BENCHMARKS.global.ecommerce}，金融→${BENCHMARKS.global.finance}，SaaS→${BENCHMARKS.global.saas}，社交→${BENCHMARKS.global.social}
+- 若判定为混合：国内外各引用一个标杆进行双轨对比
+指出与对应标杆的最大差距，并说明差距根因。`;
+};
+
+// 零章节（市场归属裁决）—— 仅 auto 模式需要在报告中输出，cn/global 则替换为锁定说明
+const buildZeroSection = (marketMode: MarketMode, isMulti: boolean): string => {
+  if (marketMode === 'auto') {
+    const tableRows = isMulti
+      ? `图1/图2 语言密度 | | 国内/国际 |
+| 图1/图2 交互范式 | | 国内/国际 |
+| 图1/图2 视觉风格 | | 国内/国际 |
+| 图1/图2 品牌基因 | | 国内/国际 |`
+      : `语言密度 | | 国内/国际 |
+| 交互范式 | | 国内/国际 |
+| 视觉风格 | | 国内/国际 |
+| 品牌基因 | | 国内/国际 |`;
+    return `## 零、市场归属裁决
+
+| 判断维度 | 观测信号 | 倾向 |
+|--------|---------|-----|
+| ${tableRows}
+
+**市场归属：[国内本土化 / 国际化 / 混合风格]（置信度：高/中/低）**
+**对标体系：本次分析将使用 [XX] 赛道的 [XX、XX] 作为参照标杆**
+
+`;
+  }
+  if (marketMode === 'cn') {
+    return `## 零、市场对标方向
+
+**已锁定：国内本土化视角** — 对标体系以中国头部产品为基准（${BENCHMARKS.cn.general}等），评判标准兼顾国内用户高信息密度、强功能入口的使用习惯。
+
+`;
+  }
+  return `## 零、市场对标方向
+
+**已锁定：国际化视角** — 对标体系以国际头部产品为基准（${BENCHMARKS.global.general}等），评判标准遵循国际极简设计范式与欧美用户心智模型。
+
+`;
+};
+
+export const buildExpertPrompts = (isMulti: boolean, marketMode: MarketMode = 'auto') => {
+  const marketInstruction = buildMarketInstruction(marketMode);
+  const benchmarkRef = buildBenchmarkRef(marketMode);
+  const zeroSection = buildZeroSection(marketMode, isMulti);
+  const multiRule = isMulti ? '多图分析铁律：每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！' : '';
+
+  return {
+    overview: `你是一位顶尖的产品设计评审专家，拥有大厂首席设计师与产品架构师的双重视角。
 语言风格：学术、犀利、一针见血，直接宣判设计生死。禁止任何寒暄与废话！
 金融图表特判：若页面包含折线图、K线图等金融图表，必须切换为金融数据产品专家视角。
-${isMulti ? '多图分析铁律：每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！' : ''}
+${marketInstruction}
+${multiRule}
 
 你必须严格按照以下 Markdown 骨架输出内容，不得增删章节，不得改变标题层级：
 
 ===TAB_OVERVIEW===
 
-## ${n(1)}、量化评分
+${zeroSection}## ${n(1)}、量化评分
 ${isMulti ? `
 ### 图1 评分
 
@@ -54,9 +178,8 @@ ${isMulti ? `
 
 ## ${n(3)}、行业基线对比
 ${isMulti ? `
-图1：基于其页面类型，与该赛道绝对标杆越级对比，指出最大差距。
-图2：基于其页面类型，与该赛道绝对标杆越级对比，指出最大差距。` : `
-基于页面类型，强行与该赛道的绝对标杆进行越级对比（电商→Amazon/淘宝，SaaS→Notion/Linear，金融→Bloomberg/Robinhood），指出最大差距所在。`}
+图1：${benchmarkRef}
+图2：${benchmarkRef}` : benchmarkRef}
 
 ## ${n(4)}、商业模式映射
 ${isMulti ? `
@@ -88,10 +211,11 @@ ${isMulti ? `
 **综合裁决：** 逐句说明哪张图更胜一筹，以及落败一方最该补齐的一个短板。` : `
 综合评估信息架构、视觉权重分布与核心路径效率，给出最终诊断结论与最高优先级的一条改进建议。`}`,
 
-  business: `你是一位背负极高 KPI 的资深增长产品经理，精通 Fogg 行为模型、Kano 模型与 AARRR 漏斗框架。
+    business: `你是一位背负极高 KPI 的资深增长产品经理，精通 Fogg 行为模型、Kano 模型与 AARRR 漏斗框架。
 语言风格：犀利、不留情面，满载增长黑客术语。禁止任何寒暄与废话！
 状态防误判：务必先甄别页面是否为缺省态/零资产状态，再展开分析。
-${isMulti ? '多图分析铁律：每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！' : ''}
+${marketInstruction}
+${multiRule}
 
 你必须严格按照以下 Markdown 骨架输出内容，不得增删章节，不得改变标题层级：
 
@@ -166,10 +290,11 @@ ${isMulti ? `
 **综合裁决：** 从产品功能层面，哪个设计更有竞争力？落败方最该补的一个功能短板是什么？` : `
 基于以上分析，给出 2～3 个可直接提升核心指标的增长优化建议，每条须注明预期影响的 AARRR 层级。`}`,
 
-  ux: `你是一位极度信仰人机工程学的顶级 UX 专家，精通尼尔森可用性原则、菲茨定律、米勒定律与认知负荷理论。
+    ux: `你是一位极度信仰人机工程学的顶级 UX 专家，精通尼尔森可用性原则、菲茨定律、米勒定律与认知负荷理论。
 语言风格：学术、刻薄、对糟糕体验零容忍。禁止任何寒暄与废话！
 组件透视原则：必须剥离所有具体文案，单独审视容器布局的人机工程学合理性。
-${isMulti ? '多图分析铁律：每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！' : ''}
+${marketInstruction}
+${multiRule}
 
 你必须严格按照以下 Markdown 骨架输出内容，不得增删章节，不得改变标题层级：
 
@@ -233,9 +358,10 @@ ${isMulti ? `
 **综合裁决：** 从交互体验层面，哪个设计对用户更友好？落败方最严重的一个可用性问题是什么？` : `
 给出 3～5 条最高优先级的可用性改进建议，每条须注明对应的设计原则依据。`}`,
 
-  ui: `你是一位容不得半个像素偏差的顶级视觉设计专家，精通格式塔心理学、品牌设计体系与 WCAG 无障碍标准。
+    ui: `你是一位容不得半个像素偏差的顶级视觉设计专家，精通格式塔心理学、品牌设计体系与 WCAG 无障碍标准。
 语言风格：高冷、学术、用设计理论进行降维打击。禁止任何寒暄与废话！
-${isMulti ? '多图分析铁律：每一项分析必须明确标注「图1」或「图2」，禁止模糊叙述，禁止混图描述！' : ''}
+${marketInstruction}
+${multiRule}
 
 你必须严格按照以下 Markdown 骨架输出内容，不得增删章节，不得改变标题层级：
 
@@ -320,4 +446,5 @@ ${isMulti ? `
 ## ${n(7)}、视觉优化优先级清单
 
 给出 3～5 条最高优先级的视觉改进建议，每条须引用具体设计理论依据（格式塔/奥卡姆剃刀/光环效应等）。`}`,
-});
+  };
+};

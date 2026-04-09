@@ -1,4 +1,4 @@
-import type { TabKey, TabContents, FileWithPreview } from '../types';
+import type { TabKey, TabContents, FileWithPreview, MarketMode } from '../types';
 import { buildExpertPrompts } from '../constants/prompts.config';
 import { fileToBase64 } from '../utils/file.utils';
 
@@ -8,8 +8,9 @@ interface RunAnalysisOptions {
   finalModel: string;
   base64Images: string[];
   isMulti: boolean;
+  marketMode: MarketMode;
   setTabContents: React.Dispatch<React.SetStateAction<TabContents>>;
-  signal?: AbortSignal; // #1: 支持中止
+  signal?: AbortSignal;
 }
 
 const streamSSE = async (
@@ -90,8 +91,8 @@ const fetchWithRetry = async (
 };
 
 export const runAnalysis = async (opts: RunAnalysisOptions): Promise<[string, string, string, string]> => {
-  const { apiKey, finalBaseUrl, finalModel, base64Images, isMulti, setTabContents, signal } = opts;
-  const prompts = buildExpertPrompts(isMulti);
+  const { apiKey, finalBaseUrl, finalModel, base64Images, isMulti, marketMode, setTabContents, signal } = opts;
+  const prompts = buildExpertPrompts(isMulti, marketMode);
   const url = `${finalBaseUrl.replace(/\/+$/, '')}/chat/completions`;
 
   const baseUserContent: object[] = [];

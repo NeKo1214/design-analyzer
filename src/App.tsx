@@ -8,7 +8,7 @@ import { HistoryPanel } from './components/HistoryPanel';
 import { FileUpload } from './components/FileUpload';
 import { ResultsPanel } from './components/ResultsPanel';
 import { parseTabContent, fileToBase64 } from './utils/file.utils';
-import type { FileWithPreview, AnalyzeMode, HistoryItem } from './types';
+import type { FileWithPreview, AnalyzeMode, HistoryItem, MarketMode } from './types';
 
 function App() {
   const storage = useLocalStorage();
@@ -17,6 +17,7 @@ function App() {
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
   const [analyzeMode, setAnalyzeMode] = useState<AnalyzeMode>('single');
+  const [marketMode, setMarketMode] = useState<MarketMode>('auto');
   const [allFiles, setAllFiles] = useState<FileWithPreview[]>([]);
   const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
@@ -126,6 +127,29 @@ function App() {
               ))}
             </div>
 
+            {/* 对标市场方向 */}
+            <div className="flex flex-col gap-1.5">
+              <span className="text-xs font-semibold text-zinc-400 px-1">对标市场方向</span>
+              <div className="grid grid-cols-3 gap-1.5">
+                {([
+                  { key: 'auto', label: '自动识别', icon: '🔀', desc: 'AI 判断' },
+                  { key: 'cn',   label: '国内本土', icon: '🇨🇳', desc: '微信/美团' },
+                  { key: 'global', label: '国际化', icon: '🌍', desc: 'Apple/Google' },
+                ] as { key: MarketMode; label: string; icon: string; desc: string }[]).map(({ key, label, icon, desc }) => (
+                  <button key={key} onClick={() => setMarketMode(key)}
+                    className={`flex flex-col items-center gap-0.5 py-2.5 px-1 rounded-xl border text-center transition-all duration-200 ${
+                      marketMode === key
+                        ? 'bg-zinc-900 text-white border-zinc-900 shadow-md'
+                        : 'bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400 hover:text-zinc-800'
+                    }`}>
+                    <span className="text-base leading-none">{icon}</span>
+                    <span className="text-[11px] font-semibold leading-tight">{label}</span>
+                    <span className={`text-[9px] leading-tight ${marketMode === key ? 'text-zinc-300' : 'text-zinc-400'}`}>{desc}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <FileUpload analyzeMode={analyzeMode} allFiles={allFiles} setAllFiles={setAllFiles} onLightbox={setLightboxImage} />
 
             {/* 分析按钮 */}
@@ -137,7 +161,7 @@ function App() {
                 </button>
               </div>
             ) : (
-              <button onClick={() => analysis.handleAnalyze(displayFiles, analyzeMode)}
+              <button onClick={() => analysis.handleAnalyze(displayFiles, analyzeMode, marketMode)}
                 disabled={allFiles.length === 0}
                 className="bg-zinc-900 text-white rounded-full font-medium tracking-wide transition-all duration-200 hover:bg-zinc-800 active:scale-[0.98] disabled:bg-zinc-200 disabled:text-zinc-400 disabled:cursor-not-allowed w-full py-4 text-base shadow-lg shadow-zinc-900/20 flex justify-center items-center gap-3 shrink-0">
                 <BarChart2 className="w-5 h-5" />
