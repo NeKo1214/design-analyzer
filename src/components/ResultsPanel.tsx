@@ -126,7 +126,7 @@ export const ResultsPanel = (props: ResultsPanelProps) => {
                       </div>
                       <div className="p-8 md:p-12 w-full break-words max-w-full">
                         <MarkdownErrorBoundary>
-                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents as any}>
+                          <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents as React.ComponentProps<typeof ReactMarkdown>['components']}>
                             {fixMarkdownHeadings(debouncedContent)}
                           </ReactMarkdown>
                         </MarkdownErrorBoundary>

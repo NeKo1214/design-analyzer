@@ -29,7 +29,7 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
     accept: { 'image/*': ['.jpeg', '.jpg', '.png', '.webp'] },
     multiple: analyzeMode === 'multiple',
     disabled: isDropzoneDisabled,
-  } as any);
+  } as Parameters<typeof useDropzone>[0]);
 
   const removeFile = (index: number) => setAllFiles(allFiles.filter((_, i) => i !== index));
 
@@ -39,7 +39,7 @@ export const FileUpload = ({ analyzeMode, allFiles, setAllFiles, onLightbox }: F
         <div {...getRootProps()}
           className={`border-[1.5px] border-dashed rounded-[22px] p-10 text-center transition-all duration-300 flex flex-col items-center justify-center min-h-[280px]
             ${isDropzoneDisabled ? 'border-zinc-200 bg-zinc-50 opacity-60 cursor-not-allowed' : isDragActive ? 'border-zinc-900 bg-zinc-100 cursor-pointer' : 'border-zinc-200 hover:border-zinc-400 hover:bg-zinc-100 cursor-pointer bg-zinc-50/50'}`}>
-          <input {...(getInputProps() as any)} />
+          <input {...(getInputProps() as React.InputHTMLAttributes<HTMLInputElement>)} />
           <div className={`w-16 h-16 rounded-full flex items-center justify-center mb-6 transition-colors duration-300 ${isDropzoneDisabled ? 'bg-zinc-100 text-zinc-400' : isDragActive ? 'bg-zinc-900 text-white' : 'bg-white shadow-sm text-zinc-600'}`}>
             <Upload className="w-6 h-6" />
           </div>
