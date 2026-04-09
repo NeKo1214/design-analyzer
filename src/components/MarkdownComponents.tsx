@@ -81,17 +81,33 @@ export const markdownComponents = {
     <blockquote className="pl-4 py-2 my-4 border-l-2 border-zinc-200 text-zinc-500 text-[15px] leading-relaxed not-italic bg-transparent">{children}</blockquote>,
   table: ({ children }: { children?: ReactNode }) => (
     <div className="overflow-x-auto my-6 border border-zinc-100 rounded-xl">
-      <table className="w-full text-[14px] text-left border-collapse m-0">{children}</table>
+      <table className="w-full text-[14px] text-left border-collapse m-0 table-fixed">{children}</table>
     </div>
   ),
   thead: ({ children }: { children?: ReactNode }) =>
     <thead className="bg-zinc-50/50 border-b border-zinc-100 text-zinc-500">{children}</thead>,
   tbody: ({ children }: { children?: ReactNode }) =>
     <tbody className="divide-y divide-zinc-50">{children}</tbody>,
-  th: ({ children }: { children?: ReactNode }) =>
-    <th className="px-4 py-3 font-medium whitespace-nowrap">{children}</th>,
-  td: ({ children }: { children?: ReactNode }) =>
-    <td className="px-4 py-3 text-zinc-600 align-top leading-relaxed break-words">{children}</td>,
+  th: ({ children }: { children?: ReactNode }) => {
+    const text = String(children ?? '');
+    // 「状态」列固定宽度居中
+    const isStatus = text === '状态' || /^[✅⚠️❌]+$/.test(text);
+    return (
+      <th className={`px-4 py-3 font-medium whitespace-nowrap ${isStatus ? 'w-20 text-center' : ''}`}>
+        {children}
+      </th>
+    );
+  },
+  td: ({ children }: { children?: ReactNode }) => {
+    const text = String(children ?? '');
+    // 纯 emoji 内容居中（状态列）
+    const isEmoji = /^[\s✅⚠️❌]+$/.test(text);
+    return (
+      <td className={`px-4 py-3 text-zinc-600 align-top leading-relaxed break-words ${isEmoji ? 'text-center w-20' : ''}`}>
+        {children}
+      </td>
+    );
+  },
   pre: ({ children }: { children?: ReactNode }) =>
     <pre className="overflow-x-auto bg-zinc-50 border border-zinc-100 text-zinc-700 p-4 rounded-2xl text-[14px] leading-[1.8] my-4 custom-scrollbar break-words whitespace-pre-wrap font-sans">{children}</pre>,
   code: ({ inline, children }: { inline?: boolean; children?: ReactNode }) => {
