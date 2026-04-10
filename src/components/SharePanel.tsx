@@ -161,17 +161,23 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
           {keys.length > 0 && (
             <div className="flex flex-col gap-2">
               {keys.map(record => (
-                <div key={record.key} className={`flex items-center gap-3 p-4 rounded-2xl border ${record.active ? 'border-zinc-200 bg-white' : 'border-zinc-100 bg-zinc-50 opacity-60'}`}>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-0.5">
-                      <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${record.active ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                        {record.active ? '有效' : '已吊销'}
-                      </span>
-                      {record.label && <span className="text-sm text-zinc-600 font-medium">{record.label}</span>}
-                      <span className="text-xs text-zinc-400">{new Date(record.createdAt).toLocaleDateString('zh-CN')}</span>
+                <div key={record.key} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${record.active ? 'border-zinc-200 bg-white' : 'border-zinc-100 bg-zinc-50 opacity-60'}`}>
+                  {/* 状态标签 */}
+                  <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${record.active ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
+                    {record.active ? '有效' : '已吊销'}
+                  </span>
+                  {/* 主体信息 */}
+                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      {record.label
+                        ? <span className="text-sm text-zinc-700 font-medium truncate">{record.label}</span>
+                        : <code className="text-xs text-zinc-500 font-mono truncate">{record.key}</code>
+                      }
+                      <span className="text-xs text-zinc-400 shrink-0 ml-auto">{new Date(record.createdAt).toLocaleDateString('zh-CN')}</span>
                     </div>
-                    <code className="text-xs text-zinc-500 font-mono truncate block">{record.key}</code>
+                    {record.label && <code className="text-xs text-zinc-400 font-mono truncate">{record.key}</code>}
                   </div>
+                  {/* 操作按钮 */}
                   <div className="flex items-center gap-1 shrink-0">
                     {record.active && (
                       <>
