@@ -22,12 +22,11 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
   const [copiedKey, setCopiedKey] = useState('');
   const [error, setError] = useState('');
 
-  const baseUrl = apiServerUrl.replace(/\/+$/, '');
+  const baseUrl = (apiServerUrl || 'http://localhost:3100').replace(/\/+$/, '');
 
-  const headers = {
-    'Content-Type': 'application/json',
-    'X-Admin-Secret': adminSecret,
-  };
+  // 若 adminSecret 为空则不附带该 Header（localhost 无需 Secret 即可访问）
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (adminSecret?.trim()) headers['X-Admin-Secret'] = adminSecret.trim();
 
   const fetchKeys = async () => {
     setLoading(true);
@@ -113,6 +112,13 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
           {/* 说明 */}
           <div className="bg-blue-50 rounded-2xl p-4 text-sm text-blue-700 leading-relaxed">
             生成 DA Key 后，将其分享给任意平台。对方填入 DA Key 后，即可调用你的分析框架与提示词能力，但需自备 LLM API Key（由对方自己承担费用）。
+          </div>
+
+          {/* 当前连接地址提示 */}
+          <div className="flex items-center gap-2 text-xs text-zinc-400 bg-zinc-50 rounded-xl px-4 py-2.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-green-400 inline-block shrink-0"></span>
+            连接到：<code className="font-mono text-zinc-600">{baseUrl}</code>
+            {!adminSecret?.trim() && <span className="ml-1 text-amber-500">（本地模式，无需 Admin Secret）</span>}
           </div>
 
           {/* 错误提示 */}
