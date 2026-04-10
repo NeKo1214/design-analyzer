@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Share2, Copy, Check, Plus, Trash2, AlertCircle } from 'lucide-react';
+import { X, Share2, Copy, Check, Plus, Trash2, XCircle, AlertCircle } from 'lucide-react';
 
 interface KeyRecord {
   key: string;
@@ -83,6 +83,24 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
       }
     } catch {
       setError('吊销失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (key: string) => {
+    if (!confirm('确认永久删除该记录？此操作不可恢复。')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/api/admin/keys/${key}/permanent`, { method: 'DELETE', headers });
+      const json = await res.json();
+      if (json.success) {
+        setKeys(prev => prev.filter(k => k.key !== key));
+      } else {
+        setError(json.error?.message || '删除失败');
+      }
+    } catch {
+      setError('删除失败');
     } finally {
       setLoading(false);
     }
@@ -179,7 +197,7 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
                   </div>
                   {/* 操作按钮 */}
                   <div className="flex items-center gap-1 shrink-0">
-                    {record.active && (
+                    {record.active ? (
                       <>
                         <button
                           onClick={() => handleCopy(record.key)}
@@ -196,6 +214,14 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </>
+                    ) : (
+                      <button
+                        onClick={() => handleDelete(record.key)}
+                        className="p-2 rounded-lg hover:bg-red-50 text-zinc-300 hover:text-red-400 transition-colors"
+                        title="永久删除记录"
+                      >
+                        <XCircle className="w-4 h-4" />
+                      </button>
                     )}
                   </div>
                 </div>

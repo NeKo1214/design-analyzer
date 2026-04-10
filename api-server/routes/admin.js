@@ -10,7 +10,7 @@
  */
 
 import { Router } from 'express';
-import { createKey, listKeys, revokeKey } from '../keys.store.js';
+import { createKey, listKeys, revokeKey, deleteKey } from '../keys.store.js';
 
 const router = Router();
 
@@ -75,6 +75,19 @@ router.delete('/keys/:key', (req, res) => {
     });
   }
   res.json({ success: true, message: `DA Key 已吊销` });
+});
+
+// DELETE /api/admin/keys/:key/permanent — 永久删除 DA Key（仅已吊销）
+router.delete('/keys/:key/permanent', (req, res) => {
+  const { key } = req.params;
+  const ok = deleteKey(key);
+  if (!ok) {
+    return res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: 'Key 不存在' },
+    });
+  }
+  res.json({ success: true, message: `DA Key 已永久删除` });
 });
 
 export default router;

@@ -81,6 +81,17 @@ export const revokeKey = (key) => {
 };
 
 /**
+ * 永久删除 Key（仅限已吊销的 Key）
+ */
+export const deleteKey = (key) => {
+  const data = readAll();
+  if (!data[key]) return false;
+  delete data[key];
+  writeAll(data);
+  return true;
+};
+
+/**
  * 验证 Key 是否有效
  */
 export const isValidKey = (key) => {
