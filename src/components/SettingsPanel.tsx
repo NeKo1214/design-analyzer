@@ -13,11 +13,15 @@ interface SettingsPanelProps {
   setCustomBaseUrl: (v: string) => void;
   customModelId: string;
   setCustomModelId: (v: string) => void;
+  apiServerUrl: string;
+  setApiServerUrl: (v: string) => void;
+  adminSecret: string;
+  setAdminSecret: (v: string) => void;
   onClose: () => void;
 }
 
 export const SettingsPanel = (props: SettingsPanelProps) => {
-  const { apiKey, setApiKey, setBaseUrl, model, setModel, customBaseUrl, setCustomBaseUrl, customModelId, setCustomModelId, onClose } = props;
+  const { apiKey, setApiKey, setBaseUrl, model, setModel, customBaseUrl, setCustomBaseUrl, customModelId, setCustomModelId, apiServerUrl, setApiServerUrl, adminSecret, setAdminSecret, onClose } = props;
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   return (
@@ -110,6 +114,34 @@ export const SettingsPanel = (props: SettingsPanelProps) => {
                       )}
                     </div>
                     <p className="text-[10px] text-zinc-400 mt-1">留空则默认使用选定模型</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">DA API Server 地址</label>
+                    <div className="relative">
+                      <input type="text" value={apiServerUrl} onChange={e => setApiServerUrl(e.target.value)}
+                        className="w-full px-3 py-2 pr-8 text-sm bg-white border border-zinc-200 rounded-lg focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 outline-none transition-all"
+                        placeholder="例如：https://your-da-server.com" />
+                      {apiServerUrl && (
+                        <button onClick={() => setApiServerUrl('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-full p-1 transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-1">用于「分享能力」功能，管理 DA Key</p>
+                  </div>
+                  <div>
+                    <label className="block text-xs font-semibold text-zinc-600 mb-1.5">Admin Secret（DA Server 管理密钥）</label>
+                    <div className="relative">
+                      <input type="password" value={adminSecret} onChange={e => setAdminSecret(e.target.value)}
+                        className="w-full px-3 py-2 pr-8 text-sm bg-white border border-zinc-200 rounded-lg focus:border-zinc-400 focus:ring-2 focus:ring-zinc-100 outline-none transition-all"
+                        placeholder="对应 DA Server 的 ADMIN_SECRET" />
+                      {adminSecret && (
+                        <button onClick={() => setAdminSecret('')} className="absolute right-1.5 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-zinc-600 bg-zinc-100 hover:bg-zinc-200 rounded-full p-1 transition-colors">
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      )}
+                    </div>
+                    <p className="text-[10px] text-zinc-400 mt-1">仅存储在本地，不会上传</p>
                   </div>
                 </div>
               </div>

@@ -51,4 +51,6 @@ export const STORAGE_KEYS = {
   MODEL: 'da_model',
   CUSTOM_BASE_URL: 'da_customBaseUrl',
   CUSTOM_MODEL_ID: 'da_customModelId',
+  API_SERVER_URL: 'da_apiServerUrl',
+  ADMIN_SECRET: 'da_adminSecret',
 } as const;

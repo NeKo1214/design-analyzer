@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Settings, BarChart2, Clock, X } from 'lucide-react';
+import { Settings, BarChart2, Clock, X, Share2 } from 'lucide-react';
 import { useLocalStorage } from './hooks/useLocalStorage';
 import { useIndexedDB } from './hooks/useIndexedDB';
 import { useAnalysis } from './hooks/useAnalysis';
@@ -7,6 +7,7 @@ import { SettingsPanel } from './components/SettingsPanel';
 import { HistoryPanel } from './components/HistoryPanel';
 import { FileUpload } from './components/FileUpload';
 import { ResultsPanel } from './components/ResultsPanel';
+import { SharePanel } from './components/SharePanel';
 import { parseTabContent, fileToBase64 } from './utils/file.utils';
 import type { FileWithPreview, AnalyzeMode, HistoryItem, MarketMode } from './types';
 
@@ -16,6 +17,7 @@ function App() {
 
   const [showSettings, setShowSettings] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
+  const [showShare, setShowShare] = useState(false);
   const [analyzeMode, setAnalyzeMode] = useState<AnalyzeMode>('single');
   const [marketMode, setMarketMode] = useState<MarketMode>('auto');
   const [allFiles, setAllFiles] = useState<FileWithPreview[]>([]);
@@ -99,6 +101,10 @@ function App() {
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${showHistory ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>
               <Clock className="w-4 h-4" />查看历史
               {history.length > 0 && <span className="text-xs bg-zinc-200 text-zinc-600 px-1.5 py-0.5 rounded-full">{history.length}</span>}
+            </button>
+            <button onClick={() => setShowShare(true)}
+              className="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 bg-zinc-100 text-zinc-700 hover:bg-zinc-200">
+              <Share2 className="w-4 h-4" />分享能力
             </button>
             <button onClick={() => setShowSettings(!showSettings)}
               className={`flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-full transition-all duration-300 ${showSettings ? 'bg-zinc-900 text-white' : 'bg-zinc-100 text-zinc-700 hover:bg-zinc-200'}`}>
@@ -201,6 +207,15 @@ function App() {
       {/* 历史记录面板 */}
       {showHistory && (
         <HistoryPanel history={history} onLoad={loadHistoryItem} onDelete={deleteHistory} onClearAll={clearAllHistory} onClose={() => setShowHistory(false)} />
+      )}
+
+      {/* DA Key 分享面板 */}
+      {showShare && (
+        <SharePanel
+          apiServerUrl={storage.apiServerUrl}
+          adminSecret={storage.adminSecret}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );
