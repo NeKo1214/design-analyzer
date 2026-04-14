@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { X, Share2, Copy, Check, Plus, Trash2, XCircle, AlertCircle } from 'lucide-react';
+import { X, Share2, Copy, Check, Plus, Trash2, XCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 interface KeyRecord {
   key: string;
@@ -88,6 +88,27 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
     }
   };
 
+  const handleReactivate = async (key: string) => {
+    if (!confirm('确认重新激活该 DA Key？重新激活后持有该 Key 的用户将恢复访问权限。')) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${baseUrl}/api/admin/keys/${key}/reactivate`, { 
+        method: 'POST',
+        headers 
+      });
+      const json = await res.json();
+      if (json.success) {
+        setKeys(prev => prev.map(k => k.key === key ? { ...k, active: true } : k));
+      } else {
+        setError(json.error?.message || '重新激活失败');
+      }
+    } catch {
+      setError('重新激活失败');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleDelete = async (key: string) => {
     if (!confirm('确认永久删除该记录？此操作不可恢复。')) return;
     setLoading(true);
@@ -111,6 +132,10 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
     setCopiedKey(key);
     setTimeout(() => setCopiedKey(''), 2000);
   };
+
+  // 分组和排序Key
+  const activeKeys = keys.filter(k => k.active).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+  const revokedKeys = keys.filter(k => !k.active).sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   return (
     <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6 bg-zinc-900/60 backdrop-blur-[2px] animate-in fade-in duration-300">
@@ -177,55 +202,106 @@ export const SharePanel = ({ apiServerUrl, adminSecret, onClose }: SharePanelPro
 
           {/* Key 列表 */}
           {keys.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {keys.map(record => (
-                <div key={record.key} className={`flex items-center gap-3 px-4 py-3 rounded-2xl border ${record.active ? 'border-zinc-200 bg-white' : 'border-zinc-100 bg-zinc-50 opacity-60'}`}>
-                  {/* 状态标签 */}
-                  <span className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${record.active ? 'bg-green-100 text-green-700' : 'bg-zinc-200 text-zinc-500'}`}>
-                    {record.active ? '有效' : '已吊销'}
-                  </span>
-                  {/* 主体信息 */}
-                  <div className="flex-1 min-w-0 flex flex-col gap-0.5">
-                    <div className="flex items-center gap-2">
-                      {record.label
-                        ? <span className="text-sm text-zinc-700 font-medium truncate">{record.label}</span>
-                        : <code className="text-xs text-zinc-500 font-mono truncate">{record.key}</code>
-                      }
-                      <span className="text-xs text-zinc-400 shrink-0 ml-auto">{new Date(record.createdAt).toLocaleDateString('zh-CN')}</span>
-                    </div>
-                    {record.label && <code className="text-xs text-zinc-400 font-mono truncate">{record.key}</code>}
+            <div className="flex flex-col gap-4">
+              {/* 有效 Key 部分 */}
+              {activeKeys.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-green-500"></span>
+                      有效密钥 ({activeKeys.length})
+                    </h3>
                   </div>
-                  {/* 操作按钮 */}
-                  <div className="flex items-center gap-1 shrink-0">
-                    {record.active ? (
-                      <>
-                        <button
-                          onClick={() => handleCopy(record.key)}
-                          className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors"
-                          title="复制 Key"
-                        >
-                          {copiedKey === record.key ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => handleRevoke(record.key)}
-                          className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
-                          title="吊销 Key"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        onClick={() => handleDelete(record.key)}
-                        className="p-2 rounded-lg hover:bg-red-50 text-zinc-300 hover:text-red-400 transition-colors"
-                        title="永久删除记录"
-                      >
-                        <XCircle className="w-4 h-4" />
-                      </button>
-                    )}
+                  <div className="flex flex-col gap-2">
+                    {activeKeys.map(record => (
+                      <div key={record.key} className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-zinc-200 bg-white">
+                        {/* 状态标签 */}
+                        <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+                          有效
+                        </span>
+                        {/* 主体信息 */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            {record.label
+                              ? <span className="text-sm text-zinc-700 font-medium truncate">{record.label}</span>
+                              : <code className="text-xs text-zinc-500 font-mono truncate">{record.key}</code>
+                            }
+                            <span className="text-xs text-zinc-400 shrink-0 ml-auto">{new Date(record.createdAt).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                          {record.label && <code className="text-xs text-zinc-400 font-mono truncate">{record.key}</code>}
+                        </div>
+                        {/* 操作按钮 */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleCopy(record.key)}
+                            className="p-2 rounded-lg hover:bg-zinc-100 text-zinc-400 hover:text-zinc-700 transition-colors"
+                            title="复制 Key"
+                          >
+                            {copiedKey === record.key ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => handleRevoke(record.key)}
+                            className="p-2 rounded-lg hover:bg-red-50 text-zinc-400 hover:text-red-500 transition-colors"
+                            title="吊销 Key"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              ))}
+              )}
+
+              {/* 已吊销 Key 部分 */}
+              {revokedKeys.length > 0 && (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-semibold text-zinc-700 flex items-center gap-2">
+                      <span className="w-2 h-2 rounded-full bg-zinc-400"></span>
+                      已吊销密钥 ({revokedKeys.length})
+                    </h3>
+                  </div>
+                  <div className="flex flex-col gap-2">
+                    {revokedKeys.map(record => (
+                      <div key={record.key} className="flex items-center gap-3 px-4 py-3 rounded-2xl border border-zinc-100 bg-zinc-50 opacity-60">
+                        {/* 状态标签 */}
+                        <span className="shrink-0 text-xs font-medium px-2 py-0.5 rounded-full bg-zinc-200 text-zinc-500">
+                          已吊销
+                        </span>
+                        {/* 主体信息 */}
+                        <div className="flex-1 min-w-0 flex flex-col gap-0.5">
+                          <div className="flex items-center gap-2">
+                            {record.label
+                              ? <span className="text-sm text-zinc-700 font-medium truncate">{record.label}</span>
+                              : <code className="text-xs text-zinc-500 font-mono truncate">{record.key}</code>
+                            }
+                            <span className="text-xs text-zinc-400 shrink-0 ml-auto">{new Date(record.createdAt).toLocaleDateString('zh-CN')}</span>
+                          </div>
+                          {record.label && <code className="text-xs text-zinc-400 font-mono truncate">{record.key}</code>}
+                        </div>
+                        {/* 操作按钮 */}
+                        <div className="flex items-center gap-1 shrink-0">
+                          <button
+                            onClick={() => handleReactivate(record.key)}
+                            className="p-2 rounded-lg hover:bg-green-50 text-zinc-400 hover:text-green-600 transition-colors"
+                            title="重新激活 Key"
+                          >
+                            <RefreshCw className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => handleDelete(record.key)}
+                            className="p-2 rounded-lg hover:bg-red-50 text-zinc-300 hover:text-red-400 transition-colors"
+                            title="永久删除记录"
+                          >
+                            <XCircle className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 

@@ -7,10 +7,11 @@
  * POST   /api/admin/keys          生成新 DA Key
  * GET    /api/admin/keys          列出所有 DA Key
  * DELETE /api/admin/keys/:key     吊销指定 DA Key
+ * POST   /api/admin/keys/:key/reactivate 重新激活 DA Key
  */
 
 import { Router } from 'express';
-import { createKey, listKeys, revokeKey, deleteKey } from '../keys.store.js';
+import { createKey, listKeys, revokeKey, reactivateKey, deleteKey } from '../keys.store.js';
 
 const router = Router();
 
@@ -75,6 +76,19 @@ router.delete('/keys/:key', (req, res) => {
     });
   }
   res.json({ success: true, message: `DA Key 已吊销` });
+});
+
+// POST /api/admin/keys/:key/reactivate — 重新激活 DA Key
+router.post('/keys/:key/reactivate', (req, res) => {
+  const { key } = req.params;
+  const ok = reactivateKey(key);
+  if (!ok) {
+    return res.status(404).json({
+      success: false,
+      error: { code: 'NOT_FOUND', message: 'Key 不存在' },
+    });
+  }
+  res.json({ success: true, message: `DA Key 已重新激活` });
 });
 
 // DELETE /api/admin/keys/:key/permanent — 永久删除 DA Key（仅已吊销）

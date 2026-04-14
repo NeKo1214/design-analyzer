@@ -81,6 +81,17 @@ export const revokeKey = (key) => {
 };
 
 /**
+ * 重新激活 Key
+ */
+export const reactivateKey = (key) => {
+  const data = readAll();
+  if (!data[key]) return false;
+  data[key].active = true;
+  writeAll(data);
+  return true;
+};
+
+/**
  * 永久删除 Key（仅限已吊销的 Key）
  */
 export const deleteKey = (key) => {
